@@ -60,13 +60,26 @@ async function loadOrders() {
 async function pay(method) {
   if (!currentOrder) { message.textContent = "注文を選択してください"; return; }
   try {
-    const response = await fetch(`${API_BASE}/orders/${currentOrder.id}/pay`, { method: "POST", headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` }, body: JSON.stringify({ method }) });
-    const data = await response.json(); if (!response.ok) throw new Error(data.message || "支払い処理に失敗しました");
-    if (mode === "accounting_pickup" || mode === "order_accounting_pickup") {
-      window.location.href = `pickup.html?from=work&mode=${mode}&order_id=${currentOrder.id}`; return;
+    const completesPickup = mode === "accounting_pickup" || mode === "order_accounting_pickup";
+    const response = await fetch(`${API_BASE}/orders/${currentOrder.id}/pay`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ method, complete_handover: completesPickup })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "支払い処理に失敗しました");
+
+    if (completesPickup) {
+      message.textContent = "会計/受け取り完了";
+      currentOrder = null;
+      detailSection.hidden = true;
+      orderList.hidden = false;
+      if (mode === "accounting_pickup") await loadOrders();
+      return;
     }
+
     if (mode === "order_accounting") { window.location.href = "work-select.html"; return; }
-    message.textContent = "会計が完了しました"; currentOrder = null; detailSection.hidden = true; orderList.hidden = false; await loadOrders();
+    message.textContent = "会計完了"; currentOrder = null; detailSection.hidden = true; orderList.hidden = false; await loadOrders();
   } catch (error) { message.textContent = error.message; }
 }
 document.querySelector("#cashButton").addEventListener("click", () => pay("cash"));
