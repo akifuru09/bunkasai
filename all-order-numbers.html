@@ -4,21 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>全注文番号 - 文化祭システム</title>
-  <link rel="stylesheet" href="style.css?v=20260911-ticketmgmt1">
+  <link rel="stylesheet" href="style.css?v=20260911-alltickets-fixed1">
 </head>
 <body class="page-ticket-management page-all-tickets">
   <div class="top-action-bar"><button id="backButton" type="button">← 戻る</button></div>
   <header><h1>全注文番号</h1><p id="className"></p></header>
   <main>
-    <p class="page-help">設定されている全注文番号の状態を確認できます。空き番号は紛失時などに使用不可へ切り替えられます。</p>
     <p id="message"></p>
-    <div class="ticket-state-legend"><span>空き</span><span>会計待ち</span><span>受け取り待ち</span><span>使用不可</span></div>
     <div id="numberList" class="all-ticket-grid"></div>
   </main>
   <section id="numberPanel" class="workflow-action-panel" hidden>
     <div id="numberDetail"></div>
     <div id="numberActions" class="ticket-management-actions"></div>
   </section>
-  <script src="all-order-numbers.js?v=20260911-ticketmgmt1"></script>
+  <script src="all-order-numbers.js?v=20260911-alltickets-fixed1"></script>
 </body>
 </html>

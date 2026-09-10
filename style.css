@@ -2302,3 +2302,66 @@ body.page-accounting main > section:first-of-type {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* 2026-09-11: 全注文番号 - 選択後の下部固定操作パネル */
+.page-all-tickets main {
+  max-width: 1200px;
+}
+
+.page-all-tickets .workflow-action-panel {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 900;
+  transform: translateX(-50%);
+  width: min(100%, 1200px);
+  max-height: min(38dvh, 300px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 14px max(16px, calc((100vw - 1168px) / 2)) calc(14px + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.10);
+}
+
+.page-all-tickets .workflow-action-panel[hidden] {
+  display: none !important;
+}
+
+.page-all-tickets.has-workflow-action-panel main {
+  padding-bottom: min(40dvh, 330px);
+}
+
+.page-all-tickets #numberDetail p {
+  margin: 0 0 6px;
+}
+
+.page-all-tickets .ticket-management-actions {
+  margin-top: 10px;
+}
+
+@media (max-height: 650px) {
+  .page-all-tickets .workflow-action-panel {
+    max-height: 46dvh;
+    padding-top: 10px;
+  }
+
+  .page-all-tickets.has-workflow-action-panel main {
+    padding-bottom: 48dvh;
+  }
+}
+
+@media (max-width: 560px) {
+  .page-all-tickets .workflow-action-panel {
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 10px 10px 0 0;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
