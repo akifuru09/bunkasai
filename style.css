@@ -1634,11 +1634,22 @@ body.has-global-back #backButton.global-back-button:hover {
 .global-correction-button {
   width: auto;
   min-width: 74px;
+  min-height: 40px;
   margin: 0;
-  padding: 10px 16px;
+  padding: 7px 12px;
   background: #fff;
   color: #111;
-  border: 1px solid #bbb;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.global-correction-button:hover {
+  background: #f2f2f0;
+  border-color: #92928d;
 }
 .correction-overlay {
   position: fixed;
