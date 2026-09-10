@@ -1,5 +1,6 @@
 const token = localStorage.getItem("token");
 const classData = JSON.parse(localStorage.getItem("class"));
+const currentWorker = JSON.parse(sessionStorage.getItem("currentWorker") || "null");
 const API_BASE = "https://163.44.103.65/api";
 const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode") || sessionStorage.getItem("currentWorkMode") || "accounting_only";
@@ -11,6 +12,11 @@ const detailSection = document.querySelector("#detailSection");
 const orderElement = document.querySelector("#order");
 const totalElement = document.querySelector("#total");
 const backButton = document.querySelector("#backButton");
+const correctionButton = document.querySelector("#correctionButton");
+const correctionPanel = document.querySelector("#correctionPanel");
+const correctionCloseButton = document.querySelector("#correctionCloseButton");
+const correctionList = document.querySelector("#correctionList");
+const correctionMessage = document.querySelector("#correctionMessage");
 let currentOrder = null;
 
 if (!token || !classData) window.location.href = "index.html";
@@ -129,7 +135,9 @@ async function pay(method) {
       },
       body: JSON.stringify({
         method,
-        complete_handover: completesPickup
+        complete_handover: completesPickup,
+        actor_user_id: currentWorker?.id || null,
+        work_mode: mode
       })
     });
 
@@ -146,7 +154,8 @@ async function pay(method) {
       if (!verifyData.order.handed_over) {
         const handoverResponse = await fetch(`${API_BASE}/orders/${paidOrderId}/handed-over`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ actor_user_id: currentWorker?.id || null, work_mode: mode })
         });
         const handoverData = await getJson(handoverResponse, "受け取り処理でサーバーエラーが発生しました");
         if (!handoverResponse.ok) throw new Error(handoverData.message || "受け取り完了にできませんでした");
@@ -184,6 +193,71 @@ async function pay(method) {
 
 document.querySelector("#cashButton").addEventListener("click", () => pay("cash"));
 document.querySelector("#paypayButton").addEventListener("click", () => pay("paypay"));
+
+async function correctionRequest(orderId, action, extra = {}) {
+  correctionMessage.textContent = "処理しています...";
+  const response = await fetch(`${API_BASE}/corrections/${orderId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action, ...extra, actor_user_id: currentWorker?.id || null, work_mode: mode })
+  });
+  const data = await getJson(response, "訂正処理でサーバーエラーが発生しました");
+  if (!response.ok) throw new Error(data.message || "訂正できませんでした");
+  correctionMessage.textContent = data.message;
+  await loadCorrections();
+  await loadOrders();
+}
+
+function addCorrectionAction(container, text, action, order, extra = {}, destructive = false) {
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = text;
+  b.className = destructive ? "correction-action destructive" : "correction-action";
+  b.addEventListener("click", async () => {
+    try { await correctionRequest(order.id, action, extra); }
+    catch (error) { correctionMessage.textContent = error.message; }
+  });
+  container.appendChild(b);
+}
+
+async function loadCorrections() {
+  correctionList.innerHTML = "<p>読み込み中...</p>";
+  const response = await fetch(`${API_BASE}/corrections/recent?work_mode=${encodeURIComponent(mode)}`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await getJson(response, "最近の操作を取得できませんでした");
+  if (!response.ok) throw new Error(data.message || "最近の操作を取得できませんでした");
+  correctionList.innerHTML = "";
+  if (!data.orders.length) { correctionList.innerHTML = "<p>訂正できる最近の操作はまだありません。</p>"; return; }
+
+  for (const order of data.orders) {
+    const card = document.createElement("article"); card.className = "correction-card";
+    const actor = order.latest_operation?.attendance_number ? `${order.latest_operation.attendance_number}番 ${order.latest_operation.user_name}` : "担当者記録なし";
+    const method = order.payment?.method === "cash" ? "現金" : order.payment?.method === "paypay" ? "PayPay" : "未会計";
+    card.innerHTML = `<div class="correction-card-head"><strong>注文番号 ${order.ticket_number}</strong><span>${method}</span></div><p>${order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ")}</p><small>${actor}</small>`;
+    const actions = document.createElement("div"); actions.className = "correction-actions";
+
+    if (order.payment && order.status === "paid") {
+      const nextMethod = order.payment.method === "cash" ? "paypay" : "cash";
+      addCorrectionAction(actions, `支払いを${nextMethod === "cash" ? "現金" : "PayPay"}に訂正`, "change_payment_method", order, { new_method: nextMethod });
+    }
+    if (mode === "accounting_only" && order.status === "paid" && !order.handed_over) {
+      addCorrectionAction(actions, "会計を取り消す", "undo_payment", order, {}, true);
+    }
+    if (mode === "accounting_pickup" && order.status === "paid" && order.handed_over) {
+      const latestType = order.latest_operation?.action_type;
+      if (latestType === "handover_completed") addCorrectionAction(actions, "受け取り完了を取り消す", "undo_handover", order, {}, true);
+      else addCorrectionAction(actions, "会計/受け取りを取り消す", "undo_payment_handover", order, {}, true);
+    }
+    if (!actions.children.length) { const n=document.createElement("p"); n.className="correction-none"; n.textContent="現在この画面から行える訂正はありません。"; actions.appendChild(n); }
+    card.appendChild(actions); correctionList.appendChild(card);
+  }
+}
+
+correctionButton.addEventListener("click", async () => {
+  correctionPanel.hidden = false; correctionMessage.textContent = "";
+  try { await loadCorrections(); } catch (error) { correctionMessage.textContent = error.message; }
+});
+correctionCloseButton.addEventListener("click", () => { correctionPanel.hidden = true; });
+correctionPanel.addEventListener("click", event => { if (event.target === correctionPanel) correctionPanel.hidden = true; });
+
 backButton.addEventListener("click", () => {
   window.location.href = params.get("from") === "work" ? "work-select.html" : "menu.html";
 });

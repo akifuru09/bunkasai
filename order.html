@@ -5,11 +5,12 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>注文 - 文化祭システム</title>
-<link href="style.css?v=20260910-operationfix1" rel="stylesheet"/>
+<link href="style.css?v=20260910-correction1" rel="stylesheet"/>
 </head>
 <body class="page-order has-global-back">
 <nav aria-label="ページナビゲーション" class="global-back-bar">
 <button class="global-back-button" id="backButton" type="button">← 戻る</button>
+<button class="global-correction-button" id="correctionButton" type="button">訂正</button>
 </nav>
 <header><h1>注文</h1></header>
 <main>
@@ -24,7 +25,14 @@
 <section><h3>注文内容</h3><div id="cart"></div><p id="total">合計 0円</p></section>
 <button id="orderButton">注文を確定</button>
 <p id="message"></p>
-</main>
-<script src="order.js?v=20260910-operationfix1"></script>
+</main><section class="correction-overlay" hidden id="correctionPanel" aria-label="最近の操作の訂正">
+<div class="correction-sheet">
+<div class="correction-sheet-header"><h2>最近の操作を訂正</h2><button type="button" id="correctionCloseButton">閉じる</button></div>
+<p class="correction-help">この業務で最近処理した8件まで表示します。訂正した操作も履歴に残ります。</p>
+<p id="correctionMessage"></p>
+<div id="correctionList" class="correction-list"></div>
+</div>
+</section>
+<script src="order.js?v=20260910-correction1"></script>
 </body>
 </html>

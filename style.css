@@ -1623,3 +1623,79 @@ body.has-global-back #backButton.global-back-button:hover {
 .completion-notice[hidden] {
   display: none;
 }
+
+/* 最近の操作の訂正 */
+.global-back-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.global-correction-button {
+  width: auto;
+  min-width: 74px;
+  margin: 0;
+  padding: 10px 16px;
+  background: #fff;
+  color: #111;
+  border: 1px solid #bbb;
+}
+.correction-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,.28);
+  padding: 64px 12px 12px;
+  overflow: auto;
+}
+.correction-sheet {
+  width: min(680px, 100%);
+  max-height: calc(100vh - 80px);
+  overflow: auto;
+  margin: 0 auto;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+}
+.correction-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.correction-sheet-header h2 { margin: 0; }
+.correction-sheet-header button { width: auto; margin: 0; }
+.correction-help { color: #555; font-size: .92rem; }
+.correction-list { display: grid; gap: 12px; }
+.correction-card {
+  padding: 14px;
+  border: 1px solid #d7d7d7;
+  border-radius: 10px;
+  background: #fff;
+}
+.correction-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+.correction-card p { margin: 8px 0; }
+.correction-card small { color: #666; }
+.correction-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.correction-action {
+  width: auto;
+  margin: 0;
+  padding: 10px 12px;
+}
+.correction-action.destructive {
+  background: #fff;
+  color: #a11;
+  border: 1px solid #c99;
+}
+.correction-none { color: #666; font-size: .9rem; }
