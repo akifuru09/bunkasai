@@ -30,6 +30,7 @@ const correctionCloseButton = document.querySelector("#correctionCloseButton");
 const correctionList = document.querySelector("#correctionList");
 const correctionMessage = document.querySelector("#correctionMessage");
 let currentOrder = null;
+let selectedOrderId = null;
 
 if (!token || !classData) window.location.href = "index.html";
 className.textContent = classData.name;
@@ -51,10 +52,30 @@ if (flashCompletion) {
   sessionStorage.removeItem("workCompletionMessage");
 }
 
+function setActionPanelVisible(visible) {
+  detailSection.hidden = !visible;
+  document.body.classList.toggle("has-workflow-action-panel", visible);
+}
+
+function markSelectedOrder(orderId) {
+  selectedOrderId = orderId;
+  document.querySelectorAll(".workflow-order-card").forEach(card => {
+    card.classList.toggle("is-selected", Number(card.dataset.orderId) === Number(orderId));
+  });
+}
+
+function clearSelection() {
+  currentOrder = null;
+  selectedOrderId = null;
+  setActionPanelVisible(false);
+  document.querySelectorAll(".workflow-order-card.is-selected").forEach(card => card.classList.remove("is-selected"));
+}
+
 function renderDetail(order) {
   clearCompletion();
   currentOrder = order;
-  detailSection.hidden = false;
+  setActionPanelVisible(true);
+  markSelectedOrder(order.id);
   orderElement.innerHTML = "";
   const head = document.createElement("p");
   head.innerHTML = order.ticket_number > 0
@@ -114,8 +135,17 @@ async function loadOrders() {
   for (const order of targets) {
     const button = document.createElement("button");
     button.className = "workflow-order-card";
+    button.dataset.orderId = String(order.id);
     const state = order.status === "paid" ? "会計済み・受け取りへ" : "未会計";
-    button.innerHTML = `<strong>注文番号 ${order.ticket_number}</strong><span>${state}　${order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ")}</span><b>${order.total}円</b>`;
+    const itemsText = order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ");
+    button.innerHTML = `
+      <span class="workflow-card-head">
+        <strong>注文番号 ${order.ticket_number}</strong>
+        <span class="workflow-card-state">${state}</span>
+      </span>
+      <span class="workflow-card-items">${itemsText}</span>
+      <b class="workflow-card-total">${order.total}円</b>
+    `;
     button.addEventListener("click", () => {
       clearCompletion();
       if (mode === "accounting_pickup" && order.status === "paid") {
@@ -126,6 +156,8 @@ async function loadOrders() {
     });
     orderList.appendChild(button);
   }
+
+  if (selectedOrderId !== null) markSelectedOrder(selectedOrderId);
 }
 
 async function pay(method) {
@@ -174,8 +206,7 @@ async function pay(method) {
       }
 
       showCompletion("会計/受け取り完了");
-      currentOrder = null;
-      detailSection.hidden = true;
+      clearSelection();
       orderList.hidden = false;
       await loadOrders();
       return;
@@ -188,8 +219,7 @@ async function pay(method) {
     }
 
     showCompletion("会計完了");
-    currentOrder = null;
-    detailSection.hidden = true;
+    clearSelection();
     orderList.hidden = false;
     await loadOrders();
   } catch (error) {

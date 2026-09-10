@@ -20,6 +20,7 @@ const correctionCloseButton = document.querySelector("#correctionCloseButton");
 const correctionList = document.querySelector("#correctionList");
 const correctionMessage = document.querySelector("#correctionMessage");
 let currentOrder = null;
+let selectedOrderId = null;
 
 if (!token || !classData) window.location.href = "index.html";
 className.textContent = classData.name;
@@ -41,10 +42,30 @@ if (flashCompletion) {
   sessionStorage.removeItem("workCompletionMessage");
 }
 
+function setActionPanelVisible(visible) {
+  detailSection.hidden = !visible;
+  document.body.classList.toggle("has-workflow-action-panel", visible);
+}
+
+function markSelectedOrder(orderId) {
+  selectedOrderId = orderId;
+  document.querySelectorAll(".workflow-order-card").forEach(card => {
+    card.classList.toggle("is-selected", Number(card.dataset.orderId) === Number(orderId));
+  });
+}
+
+function clearSelection() {
+  currentOrder = null;
+  selectedOrderId = null;
+  setActionPanelVisible(false);
+  document.querySelectorAll(".workflow-order-card.is-selected").forEach(card => card.classList.remove("is-selected"));
+}
+
 function renderDetail(order) {
   clearCompletion();
   currentOrder = order;
-  detailSection.hidden = false;
+  setActionPanelVisible(true);
+  markSelectedOrder(order.id);
   orderElement.innerHTML = "";
   const h = document.createElement("p");
   h.innerHTML = order.ticket_number > 0
@@ -99,11 +120,21 @@ async function loadOrders() {
   for (const order of d.orders) {
     const b = document.createElement("button");
     b.className = "workflow-order-card";
+    b.dataset.orderId = String(order.id);
     const state = order.status === "paid" ? "会計済み" : "会計待ち";
-    b.innerHTML = `<strong>注文番号 ${order.ticket_number}</strong><span>${state}</span><span>${order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ")}</span>`;
+    const itemsText = order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ");
+    b.innerHTML = `
+      <span class="workflow-card-head">
+        <strong>注文番号 ${order.ticket_number}</strong>
+        <span class="workflow-card-state">${state}</span>
+      </span>
+      <span class="workflow-card-items">${itemsText}</span>
+    `;
     b.addEventListener("click", () => renderDetail(order));
     orderList.appendChild(b);
   }
+
+  if (selectedOrderId !== null) markSelectedOrder(selectedOrderId);
 }
 
 editOrderButton.addEventListener("click", () => {
@@ -133,8 +164,7 @@ pickupButton.addEventListener("click", async () => {
     }
 
     showCompletion("受け取り完了");
-    currentOrder = null;
-    detailSection.hidden = true;
+    clearSelection();
     orderList.hidden = false;
     await loadOrders();
   } catch (e) {
