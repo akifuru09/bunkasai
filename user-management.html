@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        ユーザー管理 - 文化祭システム
+    </title>
+
+    <link rel="stylesheet" href="style.css?v=20260910-ui3">
+</head>
+
+<body class="page-user-management">
+
+    <header>
+        <h1>ユーザー管理</h1>
+        <p id="className"></p>
+    </header>
+
+    <main>
+
+        <p id="message"></p>
+
+        <section id="setupSection">
+
+            <h2>出席番号</h2>
+
+            <div>
+                <span>出席番号を</span>
+
+                <input id="maxAttendanceNumber" type="number" min="1" max="100">
+
+                <span>番まで追加</span>
+
+                <button id="setMaxButton">
+                    反映
+                </button>
+            </div>
+
+        </section>
+
+        <section>
+
+            <h2>ユーザー</h2>
+
+            <div id="userList"></div>
+
+            <button id="editButton">
+                編集
+            </button>
+
+            <button id="saveButton" hidden>
+                保存
+            </button>
+
+            <button id="cancelButton" hidden>
+                キャンセル
+            </button>
+
+        </section>
+
+
+        <button id="backButton">
+            戻る
+        </button>
+
+    </main>
+
+    <script src="user-management.js"></script>
+
+</body>
+
+</html>

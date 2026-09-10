@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文化祭</title>
+  <link rel="stylesheet" href="style.css?v=20260910-ui3">
+</head>
+
+<body class="page-login">
+
+  <header>
+    <h1>文化祭</h1>
+  </header>
+
+  <main>
+    <div id="login">
+      <h1>文化祭</h1>
+
+      <div>
+        <button id="generalButton" type="button">一般</button>
+        <button id="managementButton" type="button">管理</button>
+      </div>
+
+      <div>
+        <label for="classSelect">クラス</label>
+        <select id="classSelect">
+          <option value="">クラスを選択</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="password">パスワード</label>
+        <input id="password" type="password" autocomplete="current-password">
+      </div>
+
+      <button id="loginButton" type="button">ログイン</button>
+
+      <p id="message"></p>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

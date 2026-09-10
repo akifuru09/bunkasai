@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理 - 文化祭システム</title>
+  <link rel="stylesheet" href="style.css?v=20260910-ui3">
+</head>
+<body class="page-management">
+  <header>
+    <h1>管理</h1>
+  </header>
+
+  <main>
+    <h2 id="className"></h2>
+
+    <section>
+      <h3>商品追加</h3>
+      <input id="productName" type="text" placeholder="商品名">
+      <input id="productPrice" type="number" min="0" placeholder="価格">
+      <button id="addButton">追加</button>
+      <p>商品を追加したあと、商品一覧からトッピングや温度などのオプションを設定できます。</p>
+    </section>
+
+    <section>
+      <h3>商品一覧</h3>
+      <div id="products"></div>
+    </section>
+
+    <button id="backButton">戻る</button>
+    <p id="message"></p>
+  </main>
+
+  <script src="management.js?v=20260910-options-ui2"></script>
+</body>
+</html>

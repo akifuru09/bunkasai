@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>担当者確認 - 文化祭システム</title>
+    <link rel="stylesheet" href="style.css?v=20260910-ui4">
+</head>
+<body class="page-worker-confirm">
+<header>
+    <h1>担当者確認</h1>
+</header>
+
+<main>
+    <div id="numberStep">
+        <p>出席番号を入力してください</p>
+        <input id="attendanceNumber" class="number-display" type="text" inputmode="none" readonly placeholder="出席番号" aria-label="出席番号">
+        <div id="attendanceKeypad" class="numeric-keypad" aria-label="出席番号テンキー"></div>
+        <button id="checkButton">確認</button>
+    </div>
+
+    <div id="confirmStep" hidden>
+        <p id="userName"></p>
+        <p>この人で間違いありませんか？</p>
+        <button id="continueButton">業務を選ぶ</button>
+        <button id="retryButton">入力し直す</button>
+    </div>
+
+    <p id="message"></p>
+    <button id="backButton">メニューに戻る</button>
+</main>
+
+<script src="worker-confirm.js?v=20260910-keypad1"></script>
+</body>
+</html>
