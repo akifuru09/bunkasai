@@ -3,7 +3,19 @@ const classData = JSON.parse(localStorage.getItem("class"));
 const currentWorker = JSON.parse(sessionStorage.getItem("currentWorker") || "null");
 const API_BASE = "https://163.44.103.65/api";
 const params = new URLSearchParams(window.location.search);
-const mode = params.get("mode") || sessionStorage.getItem("currentWorkMode") || "accounting_only";
+const requestedMode = params.get("mode") || "accounting_only";
+
+// 「注文・会計・受け取り」は注文画面内で会計まで完結する。
+// 古いURLや古い画面遷移で accounting.html に来ても、ここでは扱わない。
+if (requestedMode === "order_accounting_pickup") {
+  window.location.replace("order.html?from=work&mode=order_accounting_pickup");
+}
+
+// 会計画面はURLで明示された会計系モードだけを採用する。
+// sessionStorage の古い業務モードで別モードに化けるのを防ぐ。
+const mode = ["accounting_only", "accounting_pickup", "order_accounting"].includes(requestedMode)
+  ? requestedMode
+  : "accounting_only";
 const className = document.querySelector("#className");
 const message = document.querySelector("#message");
 const completionNotice = document.querySelector("#completionNotice");
@@ -126,7 +138,7 @@ async function pay(method) {
   const paidOrderId = currentOrder.id;
 
   try {
-    const completesPickup = mode === "accounting_pickup" || mode === "order_accounting_pickup";
+    const completesPickup = mode === "accounting_pickup";
     const response = await fetch(`${API_BASE}/orders/${paidOrderId}/pay`, {
       method: "POST",
       headers: {
@@ -159,12 +171,6 @@ async function pay(method) {
         });
         const handoverData = await getJson(handoverResponse, "受け取り処理でサーバーエラーが発生しました");
         if (!handoverResponse.ok) throw new Error(handoverData.message || "受け取り完了にできませんでした");
-      }
-
-      if (mode === "order_accounting_pickup") {
-        sessionStorage.setItem("workCompletionMessage", "注文・会計/受け取り完了");
-        window.location.href = "order.html?from=work&mode=order_accounting_pickup";
-        return;
       }
 
       showCompletion("会計/受け取り完了");

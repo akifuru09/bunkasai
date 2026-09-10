@@ -1651,6 +1651,10 @@ body.has-global-back #backButton.global-back-button:hover {
   background: #f2f2f0;
   border-color: #92928d;
 }
+.correction-overlay[hidden] {
+  display: none !important;
+}
+
 .correction-overlay {
   position: fixed;
   inset: 0;
