@@ -61,15 +61,21 @@ async function pay(method) {
   if (!currentOrder) { message.textContent = "注文を選択してください"; return; }
   try {
     const completesPickup = mode === "accounting_pickup" || mode === "order_accounting_pickup";
-    const endpoint = completesPickup
-      ? `${API_BASE}/orders/${currentOrder.id}/pay-and-handover`
-      : `${API_BASE}/orders/${currentOrder.id}/pay`;
 
-    const response = await fetch(endpoint, {
+    const response = await fetch(`${API_BASE}/orders/${currentOrder.id}/pay`, {
       method: "POST",
       headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
-      body: JSON.stringify({ method })
+      body: JSON.stringify({
+        method,
+        complete_handover: completesPickup
+      })
     });
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(`サーバーからJSON以外の応答が返りました（HTTP ${response.status}）`);
+    }
+
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "支払い処理に失敗しました");
 
