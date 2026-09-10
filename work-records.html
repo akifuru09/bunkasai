@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>業務記録 - 文化祭システム</title>
-    <link rel="stylesheet" href="style.css?v=20260910-ui3">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注文状況一覧 - 文化祭システム</title>
+  <link rel="stylesheet" href="style.css?v=20260910-records1">
 </head>
-<body class="page-work-records">
+<body class="page-work-records page-order-records">
 <header>
-    <h1>記録を見る</h1>
-    <p id="className"></p>
+  <h1>注文状況一覧</h1>
+  <p id="className"></p>
 </header>
 
 <main>
-    <p id="message"></p>
-    <div id="recordList"></div>
-    <button id="backButton">戻る</button>
+  <div class="records-toolbar">
+    <p id="message" class="records-message" aria-live="polite"></p>
+    <button id="reloadButton" type="button" class="secondary-button">更新</button>
+  </div>
+
+  <div id="recordList" class="order-status-list"></div>
+
+  <button id="backButton" type="button">戻る</button>
 </main>
 
-<script src="work-records.js"></script>
+<script src="work-records.js?v=20260910-records1"></script>
 </body>
 </html>
