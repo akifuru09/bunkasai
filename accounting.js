@@ -80,6 +80,35 @@ async function pay(method) {
     if (!response.ok) throw new Error(data.message || "支払い処理に失敗しました");
 
     if (completesPickup) {
+      // サーバー側の /pay が complete_handover に未対応の版でも確実に
+      // 受け取り完了になるよう、支払い後の状態を確認して必要なら補完する。
+      const verifyResponse = await fetch(`${API_BASE}/orders/id/${currentOrder.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const verifyType = verifyResponse.headers.get("content-type") || "";
+      if (!verifyType.includes("application/json")) {
+        throw new Error(`注文状態の確認でJSON以外の応答が返りました（HTTP ${verifyResponse.status}）`);
+      }
+      const verifyData = await verifyResponse.json();
+      if (!verifyResponse.ok) {
+        throw new Error(verifyData.message || "注文状態を確認できませんでした");
+      }
+
+      if (!verifyData.order.handed_over) {
+        const handoverResponse = await fetch(`${API_BASE}/orders/${currentOrder.id}/handed-over`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const handoverType = handoverResponse.headers.get("content-type") || "";
+        if (!handoverType.includes("application/json")) {
+          throw new Error(`受け取り処理でJSON以外の応答が返りました（HTTP ${handoverResponse.status}）`);
+        }
+        const handoverData = await handoverResponse.json();
+        if (!handoverResponse.ok) {
+          throw new Error(handoverData.message || "受け取り完了にできませんでした");
+        }
+      }
+
       message.textContent = "会計/受け取り完了";
       currentOrder = null;
       detailSection.hidden = true;
