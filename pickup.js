@@ -121,7 +121,8 @@ async function loadOrders() {
     const b = document.createElement("button");
     b.className = "workflow-order-card";
     b.dataset.orderId = String(order.id);
-    const state = order.status === "paid" ? "会計済み" : "会計待ち";
+    const isPaid = order.status === "paid";
+    const state = isPaid ? "会計済み" : "会計待ち・選択不可";
     const itemsText = order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ");
     b.innerHTML = `
       <span class="workflow-card-head">
@@ -130,7 +131,14 @@ async function loadOrders() {
       </span>
       <span class="workflow-card-items">${itemsText}</span>
     `;
-    b.addEventListener("click", () => renderDetail(order));
+    if (!isPaid) {
+      b.disabled = true;
+      b.classList.add("is-unavailable");
+      b.setAttribute("aria-disabled", "true");
+      b.title = "会計が完了するまで選択できません";
+    } else {
+      b.addEventListener("click", () => renderDetail(order));
+    }
     orderList.appendChild(b);
   }
 

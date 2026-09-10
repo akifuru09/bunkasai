@@ -1970,3 +1970,115 @@ body.has-global-back #backButton.global-back-button:hover {
 body.page-accounting main > section:first-of-type {
   display: block;
 }
+
+
+/* 2026-09-11: 注文固定パネル・会計前編集・受け取り未会計の無効表示 */
+.page-order main {
+  max-width: 1200px;
+}
+
+.page-order .order-action-panel {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 900;
+  transform: translateX(-50%);
+  width: min(100%, 1200px);
+  max-height: min(46dvh, 430px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 14px max(16px, calc((100vw - 1168px) / 2)) calc(14px + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.10);
+}
+
+.page-order .order-action-panel[hidden] {
+  display: none !important;
+}
+
+.page-order.has-order-action-panel main {
+  padding-bottom: min(48dvh, 455px);
+}
+
+.page-order .order-action-panel h3 {
+  margin: 0 0 8px;
+}
+
+.page-order .order-action-panel #cart {
+  min-height: 0;
+  max-height: min(25dvh, 220px);
+  overflow-y: auto;
+}
+
+.page-order .order-action-panel #total {
+  margin: 8px 0 10px;
+}
+
+.page-order .order-action-panel #orderButton {
+  margin: 0;
+}
+
+.page-accounting .accounting-edit-row {
+  margin: 6px 0 10px;
+}
+
+.page-accounting .accounting-edit-row button {
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+}
+
+.page-pickup .workflow-order-card.is-unavailable,
+.page-pickup .workflow-order-card:disabled.is-unavailable {
+  opacity: 1;
+  background: #f3f3f3;
+  color: #777;
+  border-color: #c9c9c9;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.page-pickup .workflow-order-card.is-unavailable .workflow-card-state {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border: 1px solid #aaa;
+  border-radius: 999px;
+  background: #e8e8e8;
+  color: #555;
+  font-weight: 700;
+}
+
+.page-pickup .workflow-order-card.is-unavailable .workflow-card-items {
+  color: #777;
+}
+
+@media (max-height: 650px) {
+  .page-order .order-action-panel {
+    max-height: 52dvh;
+    padding-top: 10px;
+  }
+
+  .page-order.has-order-action-panel main {
+    padding-bottom: 54dvh;
+  }
+
+  .page-order .order-action-panel #cart {
+    max-height: 24dvh;
+  }
+}
+
+@media (max-width: 560px) {
+  .page-order .order-action-panel {
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 10px 10px 0 0;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}

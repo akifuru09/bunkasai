@@ -23,6 +23,7 @@ const orderList = document.querySelector("#orderList");
 const detailSection = document.querySelector("#detailSection");
 const orderElement = document.querySelector("#order");
 const totalElement = document.querySelector("#total");
+const editOrderButton = document.querySelector("#editOrderButton");
 const backButton = document.querySelector("#backButton");
 const correctionButton = document.querySelector("#correctionButton");
 const correctionPanel = document.querySelector("#correctionPanel");
@@ -67,6 +68,7 @@ function markSelectedOrder(orderId) {
 function clearSelection() {
   currentOrder = null;
   selectedOrderId = null;
+  editOrderButton.hidden = true;
   setActionPanelVisible(false);
   document.querySelectorAll(".workflow-order-card.is-selected").forEach(card => card.classList.remove("is-selected"));
 }
@@ -88,6 +90,8 @@ function renderDetail(order) {
     orderElement.appendChild(div);
   }
   totalElement.textContent = `合計 ${order.total}円`;
+  const canEditBeforePayment = mode === "order_accounting" && order.status === "unpaid" && order.handed_over !== 1;
+  editOrderButton.hidden = !canEditBeforePayment;
 }
 
 async function getJson(response, fallbackMessage) {
@@ -226,6 +230,11 @@ async function pay(method) {
     message.textContent = error.message;
   }
 }
+
+editOrderButton.addEventListener("click", () => {
+  if (!currentOrder || mode !== "order_accounting" || currentOrder.status !== "unpaid") return;
+  window.location.href = `order.html?edit_order=${currentOrder.id}&mode=order_accounting&from=accounting`;
+});
 
 document.querySelector("#cashButton").addEventListener("click", () => pay("cash"));
 document.querySelector("#paypayButton").addEventListener("click", () => pay("paypay"));

@@ -50,6 +50,11 @@ function clearCompletion() {
   completionNotice.textContent = "";
 }
 
+function setOrderActionPanelVisible(visible) {
+  cartSection.hidden = !visible;
+  document.body.classList.toggle("has-order-action-panel", visible);
+}
+
 const flashCompletion = sessionStorage.getItem("workCompletionMessage");
 if (flashCompletion) {
   showCompletion(flashCompletion);
@@ -401,6 +406,7 @@ function renderCart() {
   }
 
   totalElement.textContent = `合計 ${total}円`;
+  setOrderActionPanelVisible(cart.length > 0 || isEditing);
 }
 
 
@@ -494,6 +500,10 @@ async function submitOrderEdit(allowPaymentReversal = false) {
   if (!response.ok) throw new Error(data.message || "注文内容を訂正できませんでした");
 
   sessionStorage.setItem("workCompletionMessage", data.message);
+  if (params.get("from") === "accounting") {
+    window.location.href = `accounting.html?mode=${encodeURIComponent(mode)}&from=work&order_id=${editingOrderId}`;
+    return;
+  }
   window.location.href = `pickup.html?mode=${encodeURIComponent(mode)}&from=work&order_id=${editingOrderId}`;
 }
 
@@ -532,6 +542,7 @@ orderButton.addEventListener("click", async () => {
       pendingAllInOneOrderId = data.order_id;
       productsSection.hidden = true;
       orderButton.hidden = true;
+      setOrderActionPanelVisible(false);
       inlinePaymentSection.hidden = false;
       message.textContent = "";
       inlinePaymentSection.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -716,6 +727,10 @@ correctionPanel.addEventListener("click", event => { if (event.target === correc
 
 backButton.addEventListener("click", () => {
   if (isEditing) {
+    if (params.get("from") === "accounting") {
+      window.location.href = `accounting.html?mode=${encodeURIComponent(mode)}&from=work&order_id=${editingOrderId}`;
+      return;
+    }
     window.location.href = `pickup.html?mode=${encodeURIComponent(mode)}&from=work&order_id=${editingOrderId}`;
     return;
   }

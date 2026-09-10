@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>会計 - 文化祭システム</title><link href="style.css?v=20260911-workflowgrid1" rel="stylesheet"/></head>
+<title>会計 - 文化祭システム</title><link href="style.css?v=20260911-orderfixed2" rel="stylesheet"/></head>
 <body class="page-accounting has-global-back"><nav aria-label="ページナビゲーション" class="global-back-bar">
 <button class="global-back-button" id="backButton" type="button">← 戻る</button>
 <button class="global-correction-button" id="correctionButton" type="button">訂正</button>
@@ -10,7 +10,7 @@
 <h2 id="className"></h2><div aria-live="polite" class="completion-notice" hidden="" id="completionNotice" role="status"></div><p id="message"></p>
 <section><h3 id="listTitle">未会計の注文</h3><div class="workflow-order-list" id="orderList"></div></section>
 <section class="workflow-action-panel" hidden="" id="detailSection"><h3>選択中の注文</h3><div id="order"></div><p id="total"></p>
-<div id="paymentSection"><h3>支払い方法</h3><button id="cashButton">現金</button><button id="paypayButton">PayPay</button></div></section>
+<div class="accounting-edit-row"><button class="secondary-action" hidden id="editOrderButton" type="button">← 注文内容を変更</button></div><div id="paymentSection"><h3>支払い方法</h3><button id="cashButton">現金</button><button id="paypayButton">PayPay</button></div></section>
 </main><section class="correction-overlay" hidden id="correctionPanel" aria-label="最近の操作の訂正">
 <div class="correction-sheet">
 <div class="correction-sheet-header"><h2>最近の操作を訂正</h2><button type="button" id="correctionCloseButton">閉じる</button></div>
@@ -18,4 +18,4 @@
 <p id="correctionMessage"></p>
 <div id="correctionList" class="correction-list"></div>
 </div>
-</section><script src="accounting.js?v=20260911-workflowgrid1"></script></body></html>
+</section><script src="accounting.js?v=20260911-orderfixed2"></script></body></html>
