@@ -161,7 +161,23 @@ async function loadOrders() {
 
   orderList.hidden = false;
   orderList.innerHTML = "";
-  const targets = data.orders;
+  const parseTime = value => {
+    const time = value ? Date.parse(value.replace(" ", "T")) : NaN;
+    return Number.isFinite(time) ? time : Number.MAX_SAFE_INTEGER;
+  };
+
+  const targets = [...data.orders].sort((a, b) => {
+    if (mode === "accounting_pickup") {
+      const aPaid = a.status === "paid";
+      const bPaid = b.status === "paid";
+      if (aPaid !== bPaid) return aPaid ? -1 : 1;
+      if (aPaid && bPaid) {
+        return parseTime(a.paid_at) - parseTime(b.paid_at) || Number(a.id) - Number(b.id);
+      }
+    }
+    return parseTime(a.created_at) - parseTime(b.created_at) || Number(a.id) - Number(b.id);
+  });
+
   if (targets.length === 0) {
     orderList.innerHTML = `<p>${mode === "accounting_pickup" ? "会計・受け取り待ち" : "未会計"}の注文はありません。</p>`;
     return;

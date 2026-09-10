@@ -129,12 +129,28 @@ async function loadOrders() {
 
   orderList.hidden = false;
   orderList.innerHTML = "";
-  if (d.orders.length === 0) {
+
+  const parseTime = value => {
+    const time = value ? Date.parse(value.replace(" ", "T")) : NaN;
+    return Number.isFinite(time) ? time : Number.MAX_SAFE_INTEGER;
+  };
+
+  const sortedOrders = [...d.orders].sort((a, b) => {
+    const aPaid = a.status === "paid";
+    const bPaid = b.status === "paid";
+    if (aPaid !== bPaid) return aPaid ? -1 : 1;
+    if (aPaid && bPaid) {
+      return parseTime(a.paid_at) - parseTime(b.paid_at) || Number(a.id) - Number(b.id);
+    }
+    return parseTime(a.created_at) - parseTime(b.created_at) || Number(a.id) - Number(b.id);
+  });
+
+  if (sortedOrders.length === 0) {
     orderList.innerHTML = "<p>未受け取りの注文はありません。</p>";
     return;
   }
 
-  for (const order of d.orders) {
+  for (const order of sortedOrders) {
     const b = document.createElement("button");
     b.className = "workflow-order-card";
     b.dataset.orderId = String(order.id);
