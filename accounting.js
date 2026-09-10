@@ -61,10 +61,14 @@ async function pay(method) {
   if (!currentOrder) { message.textContent = "注文を選択してください"; return; }
   try {
     const completesPickup = mode === "accounting_pickup" || mode === "order_accounting_pickup";
-    const response = await fetch(`${API_BASE}/orders/${currentOrder.id}/pay`, {
+    const endpoint = completesPickup
+      ? `${API_BASE}/orders/${currentOrder.id}/pay-and-handover`
+      : `${API_BASE}/orders/${currentOrder.id}/pay`;
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
-      body: JSON.stringify({ method, complete_handover: completesPickup })
+      body: JSON.stringify({ method })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "支払い処理に失敗しました");
