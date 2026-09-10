@@ -2122,3 +2122,90 @@ body.page-accounting main > section:first-of-type {
 .workflow-card-times span {
   white-space: nowrap;
 }
+
+
+/* 2026-09-11: 業務選択内の注文番号管理 */
+.page-work-select .work-select-section > h2 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+.page-work-select .work-select-number-section {
+  margin-top: 42px;
+}
+#ticketManagementList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 32px;
+}
+#ticketManagementList button {
+  min-height: 76px;
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.page-ticket-management main {
+  max-width: 1100px;
+}
+.page-ticket-management .page-help {
+  margin-bottom: 18px;
+  color: #444;
+}
+.ticket-management-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.ticket-management-actions > p,
+.ticket-management-actions .ticket-busy-note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.ticket-management-actions button {
+  width: 100%;
+}
+.all-ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 10px;
+}
+.all-ticket-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+  min-height: 72px;
+  padding: 12px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.all-ticket-card strong { font-size: 1.08rem; }
+.all-ticket-card span { font-size: .86rem; font-weight: 500; }
+.all-ticket-card.is-selected { border: 2px solid #111; padding: 11px; }
+.all-ticket-card.is-disabled { background: #ececec; color: #666; border-style: dashed; }
+.all-ticket-card.is-waiting_payment { border-left: 5px solid #111; }
+.all-ticket-card.is-waiting_pickup { border-left: 5px double #111; }
+.ticket-state-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 14px;
+  font-size: .88rem;
+  color: #444;
+}
+.destructive-secondary {
+  background: #fff;
+  border: 1px solid #777;
+}
+
+@media (max-width: 640px) {
+  #workList,
+  #ticketManagementList {
+    grid-template-columns: 1fr;
+  }
+  .page-work-select .work-select-number-section { margin-top: 34px; }
+  .all-ticket-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ticket-management-actions { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使用中の注文番号 - 文化祭システム</title>
+  <link rel="stylesheet" href="style.css?v=20260911-ticketmgmt1">
+</head>
+<body class="page-ticket-management page-active-tickets">
+  <div class="top-action-bar"><button id="backButton" type="button">← 戻る</button></div>
+  <header><h1>使用中の注文番号</h1><p id="className"></p></header>
+  <main>
+    <p class="page-help">使用中の注文番号を、注文された時刻が古い順に表示します。</p>
+    <p id="completionNotice" class="completion-notice" hidden></p>
+    <p id="message"></p>
+    <div id="orderList" class="workflow-order-list"></div>
+  </main>
+  <section id="detailSection" class="workflow-action-panel" hidden>
+    <div id="order"></div>
+    <p id="total"></p>
+    <div id="paymentActions" class="ticket-management-actions" hidden>
+      <p>支払い方法</p>
+      <button id="cashButton" type="button">現金</button>
+      <button id="paypayButton" type="button">PayPay</button>
+    </div>
+    <div id="pickupActions" class="ticket-management-actions" hidden>
+      <button id="pickupButton" type="button">受け取り完了</button>
+    </div>
+  </section>
+  <script src="active-order-numbers.js?v=20260911-ticketmgmt1"></script>
+</body>
+</html>

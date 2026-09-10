@@ -158,7 +158,13 @@ function renderTicketGrid(numbers) {
     button.className = "ticket-number-button";
     if (!item.available) button.classList.add("is-busy");
     if (selectedTicket === item.number) button.classList.add("is-selected");
-    button.title = item.available ? "空き" : (item.state === "paid" ? "会計済み・受取待ち" : "使用中");
+    button.title = item.available
+      ? "空き"
+      : item.state === "disabled"
+        ? "使用不可"
+        : item.state === "paid"
+          ? "会計済み・受取待ち"
+          : "使用中";
     button.addEventListener("click", () => { selectedTicket = item.number; renderTicketGrid(numbers); });
     ticketGrid.appendChild(button);
   }

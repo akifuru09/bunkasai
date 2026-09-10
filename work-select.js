@@ -6,6 +6,8 @@ const className = document.querySelector("#className");
 const message = document.querySelector("#message");
 const workList = document.querySelector("#workList");
 const backButton = document.querySelector("#backButton");
+const activeTicketsButton = document.querySelector("#activeTicketsButton");
+const allTicketsButton = document.querySelector("#allTicketsButton");
 
 if (!token || !classData) window.location.href = "index.html";
 if (!currentWorker) window.location.href = "worker-confirm.html";
@@ -48,6 +50,14 @@ for (const [key, name, description] of modes) {
   button.addEventListener("click", () => startWork(key, name, button));
   workList.appendChild(button);
 }
+
+activeTicketsButton.addEventListener("click", () => {
+  window.location.href = "active-order-numbers.html";
+});
+
+allTicketsButton.addEventListener("click", () => {
+  window.location.href = "all-order-numbers.html";
+});
 
 backButton.addEventListener("click", () => {
   sessionStorage.removeItem("currentWorker");

@@ -10,7 +10,7 @@
 
     <title>業務選択 - 文化祭システム</title>
 
-    <link rel="stylesheet" href="style.css?v=20260910-ui3">
+    <link rel="stylesheet" href="style.css?v=20260911-ticketmgmt1">
 </head>
 
 <body class="page-work-select">
@@ -22,11 +22,26 @@
 
 <main>
 
-    <p>行う業務を選択してください</p>
-
     <p id="message"></p>
 
-    <div id="workList"></div>
+    <section class="work-select-section">
+        <h2>業務</h2>
+        <div id="workList"></div>
+    </section>
+
+    <section class="work-select-section work-select-number-section">
+        <h2>注文番号</h2>
+        <div id="ticketManagementList">
+            <button id="activeTicketsButton" class="work-mode-button" type="button">
+                <strong>使用中の注文番号</strong>
+                <span>現在使用中の注文を古い順に確認・処理する</span>
+            </button>
+            <button id="allTicketsButton" class="work-mode-button" type="button">
+                <strong>全注文番号</strong>
+                <span>すべての番号の状態確認・使用不可設定をする</span>
+            </button>
+        </div>
+    </section>
 
     <button id="backButton">
         担当者確認に戻る
@@ -34,7 +49,7 @@
 
 </main>
 
-<script src="work-select.js"></script>
+<script src="work-select.js?v=20260911-ticketmgmt1"></script>
 
 </body>
 </html>
