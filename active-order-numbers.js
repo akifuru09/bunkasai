@@ -44,6 +44,11 @@ function clearCompletion() {
 function setPanel(visible) {
   detailSection.hidden = !visible;
   document.body.classList.toggle("has-workflow-action-panel", visible);
+  if (!visible) {
+    detailSection.classList.remove("is-waiting-payment", "is-waiting-pickup");
+    paymentActions.hidden = true;
+    pickupActions.hidden = true;
+  }
 }
 function renderDetail(order) {
   clearCompletion();
@@ -59,8 +64,15 @@ function renderDetail(order) {
     orderElement.appendChild(row);
   }
   totalElement.textContent = `合計 ${order.total}円`;
-  paymentActions.hidden = order.status !== "unpaid";
-  pickupActions.hidden = order.status !== "paid";
+
+  // 会計待ちでは会計操作だけ、受け取り待ちでは受け取り操作だけを表示する。
+  const isWaitingPayment = order.status === "unpaid";
+  const isWaitingPickup = order.status === "paid";
+  paymentActions.hidden = !isWaitingPayment;
+  pickupActions.hidden = !isWaitingPickup;
+
+  detailSection.classList.toggle("is-waiting-payment", isWaitingPayment);
+  detailSection.classList.toggle("is-waiting-pickup", isWaitingPickup);
 }
 async function loadOrders() {
   const response = await fetch(`${API_BASE}/order-numbers/active`, {
