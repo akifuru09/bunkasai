@@ -57,7 +57,9 @@ function renderDetail(order) {
     orderElement.appendChild(d);
   }
   totalElement.textContent = `合計 ${order.total}円`;
-  editOrderButton.disabled = order.handed_over === 1 || order.status === "cancelled";
+  const canEditFromPickup = order.status === "paid" && order.handed_over !== 1;
+  editOrderButton.disabled = !canEditFromPickup;
+  editOrderButton.textContent = canEditFromPickup ? "注文内容を訂正" : "会計完了後に訂正できます";
   pickupButton.disabled = order.status !== "paid";
   pickupButton.textContent = order.status === "paid" ? "受け取り完了" : "会計が完了していません";
 }
@@ -168,7 +170,7 @@ async function loadCorrections() {
     const actor = order.latest_operation?.attendance_number ? `${order.latest_operation.attendance_number}番 ${order.latest_operation.user_name}` : "担当者記録なし";
     card.innerHTML = `<div class="correction-card-head"><strong>注文番号 ${order.ticket_number}</strong><span>${order.handed_over ? "受け取り済み" : "未受け取り"}</span></div><p>${order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ")}</p><small>${actor}</small>`;
     const actions = document.createElement("div"); actions.className = "correction-actions";
-    if (order.status !== "cancelled" && !order.handed_over) {
+    if (order.status === "paid" && !order.handed_over) {
       const edit = document.createElement("button");
       edit.type = "button";
       edit.className = "correction-action";
