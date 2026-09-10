@@ -1249,3 +1249,19 @@ body.page-master #newClassName {
     min-height: 58px;
   }
 }
+
+
+/* 固定業務・注文番号・受け取り */
+.work-mode-button { display:flex; flex-direction:column; align-items:flex-start; gap:4px; width:100%; text-align:left; padding:16px; }
+.work-mode-button span { font-size:.88rem; font-weight:400; opacity:.72; }
+.ticket-auto { border:1px solid var(--line-strong); padding:16px; text-align:center; font-weight:700; }
+.ticket-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(58px,1fr)); gap:8px; }
+.ticket-number-button { min-height:52px; }
+.ticket-number-button.is-busy { opacity:.38; text-decoration:line-through; }
+.ticket-number-button.is-selected { background:#111; color:#fff; }
+.workflow-order-list { display:grid; gap:10px; }
+.workflow-order-card { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; width:100%; text-align:left; padding:14px 16px; }
+.workflow-order-card span { font-weight:400; }
+.inline-number-input { display:flex; align-items:center; gap:8px; max-width:320px; }
+.switch-row { display:flex; align-items:flex-start; gap:10px; }
+@media (max-width:640px){ .workflow-order-card{grid-template-columns:1fr; gap:4px;} .ticket-grid{grid-template-columns:repeat(5,1fr);} }

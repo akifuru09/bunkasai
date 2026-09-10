@@ -1,305 +1,75 @@
-const token =
-  localStorage.getItem("token");
-
-const classData =
-  JSON.parse(
-    localStorage.getItem("class")
-  );
-
-
-const API_BASE =
-  "https://163.44.103.65/api";
-
-
-const className =
-  document.querySelector("#className");
-
-const ticketNumber =
-  document.querySelector("#ticketNumber");
-
-const searchButton =
-  document.querySelector("#searchButton");
-
-const ticketKeypad =
-  document.querySelector("#ticketKeypad");
-
-const orderElement =
-  document.querySelector("#order");
-
-const totalElement =
-  document.querySelector("#total");
-
-const paymentSection =
-  document.querySelector("#paymentSection");
-
-const message =
-  document.querySelector("#message");
-
-const backButton =
-  document.querySelector("#backButton");
-
-
+const token = localStorage.getItem("token");
+const classData = JSON.parse(localStorage.getItem("class"));
+const API_BASE = "https://163.44.103.65/api";
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode") || sessionStorage.getItem("currentWorkMode") || "accounting_only";
+const className = document.querySelector("#className");
+const message = document.querySelector("#message");
+const orderList = document.querySelector("#orderList");
+const detailSection = document.querySelector("#detailSection");
+const orderElement = document.querySelector("#order");
+const totalElement = document.querySelector("#total");
+const backButton = document.querySelector("#backButton");
 let currentOrder = null;
+if (!token || !classData) window.location.href = "index.html";
+className.textContent = classData.name;
 
-function createNumericKeypad(container, input, { maxLength = 2 } = {}) {
-  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "backspace"];
-
-  for (const key of keys) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "keypad-key";
-
-    if (key === "clear") {
-      button.textContent = "消去";
-      button.classList.add("keypad-key-secondary");
-    } else if (key === "backspace") {
-      button.textContent = "⌫";
-      button.setAttribute("aria-label", "1文字削除");
-      button.classList.add("keypad-key-secondary");
-    } else {
-      button.textContent = key;
-    }
-
-    button.addEventListener("click", () => {
-      if (key === "clear") {
-        input.value = "";
-      } else if (key === "backspace") {
-        input.value = input.value.slice(0, -1);
-      } else if (input.value.length < maxLength) {
-        input.value += key;
-      }
-    });
-
-    container.appendChild(button);
-  }
+function renderDetail(order) {
+  currentOrder = order; detailSection.hidden = false; orderElement.innerHTML = "";
+  const head = document.createElement("p");
+  head.innerHTML = order.ticket_number > 0 ? `<strong>注文番号 ${order.ticket_number}</strong>` : `<strong>番号なし</strong>`;
+  orderElement.appendChild(head);
+  for (const item of order.items) { const div = document.createElement("div"); div.textContent = `${item.product_name} × ${item.quantity}　${item.unit_price * item.quantity}円`; orderElement.appendChild(div); }
+  totalElement.textContent = `合計 ${order.total}円`;
 }
 
-createNumericKeypad(ticketKeypad, ticketNumber, { maxLength: 2 });
-
-
-// ログイン確認
-if (!token || !classData) {
-  window.location.href =
-    "index.html";
-}
-
-
-className.textContent =
-  classData.name;
-
-
-// 注文検索
-searchButton.addEventListener(
-  "click",
-  async () => {
-
-    const ticket =
-      Number(ticketNumber.value);
-
-
-    if (
-      !Number.isInteger(ticket) ||
-      ticket < 1 ||
-      ticket > 50
-    ) {
-
-      message.textContent =
-        "チケット番号は1〜50で入力してください";
-
-      return;
-    }
-
-
-    try {
-
-      const response = await fetch(
-        `${API_BASE}/orders/ticket/${ticket}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
-          }
-        }
-      );
-
-
-      const data =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        message.textContent =
-          data.message ||
-          "注文を取得できませんでした";
-
-        orderElement.innerHTML = "";
-        totalElement.textContent = "";
-        paymentSection.style.display =
-          "none";
-
-        currentOrder = null;
-
-        return;
-      }
-
-
-      currentOrder =
-        data.order;
-
-
-      orderElement.innerHTML = "";
-
-
-      for (
-        const item
-        of currentOrder.items
-      ) {
-
-        const div =
-          document.createElement("div");
-
-        div.textContent =
-          `${item.product_name} × ${item.quantity}　¥${item.unit_price * item.quantity}`;
-
-        orderElement.appendChild(div);
-      }
-
-
-      totalElement.textContent =
-        `合計 ¥${currentOrder.total}`;
-
-      paymentSection.style.display =
-        "block";
-
-      message.textContent = "";
-
-
-    } catch (error) {
-
-      console.error(error);
-
-      message.textContent =
-        "注文を取得できませんでした";
-    }
+async function loadOrders() {
+  const directId = Number(params.get("order_id"));
+  if (Number.isInteger(directId) && directId > 0) {
+    const response = await fetch(`${API_BASE}/orders/id/${directId}`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await response.json();
+    if (!response.ok) { message.textContent = data.message; return; }
+    orderList.hidden = true; renderDetail(data.order); return;
   }
-);
-
-
-// 支払い
-async function pay(method) {
-
-  if (!currentOrder) {
-
-    message.textContent =
-      "先に注文を検索してください";
-
+  const endpoint = mode === "accounting_pickup" ? "unreceived" : "unpaid";
+  const response = await fetch(`${API_BASE}/orders/${endpoint}`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await response.json();
+  if (!response.ok) { message.textContent = data.message || "注文を取得できませんでした"; return; }
+  orderList.innerHTML = "";
+  const targets = data.orders;
+  if (targets.length === 0) {
+    orderList.innerHTML = `<p>${mode === "accounting_pickup" ? "会計・受け取り待ち" : "未会計"}の注文はありません。</p>`;
     return;
   }
-
-
-  try {
-
-    const response = await fetch(
-      `${API_BASE}/orders/${currentOrder.id}/pay`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-
-          Authorization:
-            `Bearer ${token}`
-        },
-
-        body: JSON.stringify({
-          method
-        })
+  for (const order of targets) {
+    const button = document.createElement("button");
+    button.className = "workflow-order-card";
+    const state = order.status === "paid" ? "会計済み・受け取りへ" : "未会計";
+    button.innerHTML = `<strong>注文番号 ${order.ticket_number}</strong><span>${state}　${order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ")}</span><b>${order.total}円</b>`;
+    button.addEventListener("click", () => {
+      if (mode === "accounting_pickup" && order.status === "paid") {
+        window.location.href = `pickup.html?from=work&mode=accounting_pickup&order_id=${order.id}`;
+        return;
       }
-    );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      message.textContent =
-        data.message ||
-        "支払い処理に失敗しました";
-
-      return;
-    }
-
-
-    message.textContent =
-      `支払い完了（${
-        method === "cash"
-          ? "現金"
-          : "PayPay"
-      }）`;
-
-
-    paymentSection.style.display =
-      "none";
-
-    orderElement.innerHTML = "";
-    totalElement.textContent = "";
-
-    ticketNumber.value = "";
-
-    currentOrder = null;
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    message.textContent =
-      "支払い処理に失敗しました";
+      renderDetail(order);
+    });
+    orderList.appendChild(button);
   }
 }
 
-
-document
-  .querySelector("#cashButton")
-  .addEventListener(
-    "click",
-    () => {
-      pay("cash");
+async function pay(method) {
+  if (!currentOrder) { message.textContent = "注文を選択してください"; return; }
+  try {
+    const response = await fetch(`${API_BASE}/orders/${currentOrder.id}/pay`, { method: "POST", headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` }, body: JSON.stringify({ method }) });
+    const data = await response.json(); if (!response.ok) throw new Error(data.message || "支払い処理に失敗しました");
+    if (mode === "accounting_pickup" || mode === "order_accounting_pickup") {
+      window.location.href = `pickup.html?from=work&mode=${mode}&order_id=${currentOrder.id}`; return;
     }
-  );
-
-
-document
-  .querySelector("#paypayButton")
-  .addEventListener(
-    "click",
-    () => {
-      pay("paypay");
-    }
-  );
-
-
-// 戻る
-// 業務画面から来た場合は、直前の業務画面へ戻る。
-// 通常利用の場合はメニューへ戻る。
-backButton.addEventListener(
-  "click",
-  () => {
-    const params = new URLSearchParams(window.location.search);
-
-    if (params.get("from") === "work") {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = "work-screen.html";
-      }
-      return;
-    }
-
-    window.location.href = "menu.html";
-  }
-);
+    if (mode === "order_accounting") { window.location.href = "work-select.html"; return; }
+    message.textContent = "会計が完了しました"; currentOrder = null; detailSection.hidden = true; orderList.hidden = false; await loadOrders();
+  } catch (error) { message.textContent = error.message; }
+}
+document.querySelector("#cashButton").addEventListener("click", () => pay("cash"));
+document.querySelector("#paypayButton").addEventListener("click", () => pay("paypay"));
+backButton.addEventListener("click", () => { window.location.href = params.get("from") === "work" ? "work-select.html" : "menu.html"; });
+loadOrders();

@@ -1,60 +1,63 @@
 const token = localStorage.getItem("token");
 const classData = JSON.parse(localStorage.getItem("class"));
 const API_BASE = "https://163.44.103.65/api";
-
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode") || sessionStorage.getItem("currentWorkMode") || "order_only";
+const noTicket = mode === "order_accounting_pickup";
 const className = document.querySelector("#className");
 const productsElement = document.querySelector("#products");
 const cartElement = document.querySelector("#cart");
 const totalElement = document.querySelector("#total");
 const message = document.querySelector("#message");
-const ticketNumber = document.querySelector("#ticketNumber");
-const ticketKeypad = document.querySelector("#ticketKeypad");
+const ticketSection = document.querySelector("#ticketSection");
+const ticketHelp = document.querySelector("#ticketHelp");
+const ticketAuto = document.querySelector("#ticketAuto");
+const ticketGrid = document.querySelector("#ticketGrid");
 const orderButton = document.querySelector("#orderButton");
 const backButton = document.querySelector("#backButton");
+let selectedTicket = null;
+let settings = null;
 
-if (!token || !classData) {
-  window.location.href = "index.html";
-}
-
+if (!token || !classData) window.location.href = "index.html";
 className.textContent = classData.name;
 const cart = [];
 const quantityDisplays = new Set();
 
-function createNumericKeypad(container, input, { maxLength = 2 } = {}) {
-  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "backspace"];
-
-  for (const key of keys) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "keypad-key";
-
-    if (key === "clear") {
-      button.textContent = "消去";
-      button.classList.add("keypad-key-secondary");
-    } else if (key === "backspace") {
-      button.textContent = "⌫";
-      button.setAttribute("aria-label", "1文字削除");
-      button.classList.add("keypad-key-secondary");
-    } else {
-      button.textContent = key;
-    }
-
-    button.addEventListener("click", () => {
-      if (key === "clear") {
-        input.value = "";
-      } else if (key === "backspace") {
-        input.value = input.value.slice(0, -1);
-      } else if (input.value.length < maxLength) {
-        input.value += key;
-      }
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    container.appendChild(button);
+async function loadTicketState() {
+  if (noTicket) {
+    ticketSection.hidden = true;
+    return;
+  }
+  const response = await fetch(`${API_BASE}/order-numbers/status`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await response.json();
+  if (!response.ok) { message.textContent = data.message || "注文番号を取得できませんでした"; return; }
+  settings = data;
+  if (data.auto_cycle) {
+    ticketHelp.textContent = "注文番号は注文確定時に自動で割り当てられます。";
+    ticketAuto.hidden = false;
+    ticketAuto.textContent = `1〜${data.max_ticket_number}を順番に使用します`;
+  } else {
+    ticketHelp.textContent = "空いている注文番号を選択してください。";
+    ticketGrid.hidden = false;
+    renderTicketGrid(data.numbers);
   }
 }
 
-createNumericKeypad(ticketKeypad, ticketNumber, { maxLength: 2 });
+function renderTicketGrid(numbers) {
+  ticketGrid.innerHTML = "";
+  for (const item of numbers) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = item.number;
+    button.disabled = !item.available;
+    button.className = "ticket-number-button";
+    if (!item.available) button.classList.add("is-busy");
+    if (selectedTicket === item.number) button.classList.add("is-selected");
+    button.title = item.available ? "空き" : (item.state === "paid" ? "会計済み・受取待ち" : "使用中");
+    button.addEventListener("click", () => { selectedTicket = item.number; renderTicketGrid(numbers); });
+    ticketGrid.appendChild(button);
+  }
+}
 
 function priceLabel(price) {
   return price === 0 ? "無料" : `${price}円`;
@@ -360,53 +363,40 @@ function renderCart() {
   totalElement.textContent = `合計 ${total}円`;
 }
 
+
 orderButton.addEventListener("click", async () => {
-  const ticket = Number(ticketNumber.value);
-  if (!Number.isInteger(ticket) || ticket < 1 || ticket > 50) {
-    message.textContent = "チケット番号は1〜50で入力してください";
-    return;
-  }
-  if (cart.length === 0) {
-    message.textContent = "商品を1つ以上選択してください";
-    return;
-  }
-
-  const items = cart.map(item => ({
-    product_id: item.product_id,
-    quantity: item.quantity,
-    option_ids: item.options.map(option => option.id)
-  }));
-
+  if (cart.length === 0) { message.textContent = "商品を1つ以上選択してください"; return; }
+  if (!noTicket && settings && !settings.auto_cycle && !selectedTicket) { message.textContent = "注文番号を選択してください"; return; }
+  const items = cart.map(item => ({ product_id: item.product_id, quantity: item.quantity, option_ids: item.options.map(option => option.id) }));
   try {
+    orderButton.disabled = true;
     const response = await fetch(`${API_BASE}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ticket_number: ticket, items })
+      body: JSON.stringify({ ticket_number: selectedTicket, no_ticket: noTicket, items })
     });
     const data = await response.json();
-    if (!response.ok) {
-      message.textContent = data.message;
+    if (!response.ok) throw new Error(data.message || "注文を送信できませんでした");
+
+    if (mode === "order_accounting" || mode === "order_accounting_pickup") {
+      window.location.href = `accounting.html?from=work&mode=${mode}&order_id=${data.order_id}`;
       return;
     }
-    message.textContent = `注文を受け付けました（注文ID: ${data.order_id}）`;
-    cart.length = 0;
-    ticketNumber.value = "";
-    renderCart();
-    updateAllQuantityDisplays();
+
+    message.textContent = `注文を受け付けました（注文番号 ${data.ticket_number}）`;
+    cart.length = 0; selectedTicket = null; renderCart(); updateAllQuantityDisplays();
+    await loadTicketState();
   } catch (error) {
-    console.error(error);
-    message.textContent = "注文を送信できませんでした";
+    message.textContent = error.message;
+  } finally {
+    orderButton.disabled = false;
   }
 });
 
 backButton.addEventListener("click", () => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("from") === "work") {
-    window.location.href = "work-screen.html";
-    return;
-  }
-  window.location.href = "menu.html";
+  window.location.href = params.get("from") === "work" ? "work-select.html" : "menu.html";
 });
 
 renderCart();
+loadTicketState();
 loadProducts();
