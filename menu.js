@@ -19,7 +19,6 @@ if (userData.is_management === 1) {
   addMenuButton("商品管理", "management.html");
   addMenuButton("ユーザー管理", "user-management.html");
   addMenuButton("注文番号設定", "order-number-settings.html");
-  addMenuButton("注文管理", "order-management.html");
 } else {
   addMenuButton("業務", "worker-confirm.html");
   addMenuButton("記録を見る", "work-records.html");

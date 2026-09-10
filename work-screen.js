@@ -26,7 +26,6 @@ workerName.textContent =
 const pageMap = {
     order: "order.html?from=work",
     accounting: "accounting.html?from=work",
-    order_management: "order-management.html?from=work",
     sales: null,
     product_management: "management.html",
     user_management: "user-management.html"
