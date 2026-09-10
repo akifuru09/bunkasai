@@ -4,6 +4,22 @@ const currentWorker = JSON.parse(sessionStorage.getItem("currentWorker") || "nul
 const API_BASE = "https://163.44.103.65/api";
 const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode") || sessionStorage.getItem("currentWorkMode") || "order_only";
+
+const WORK_MODE_TITLES = {
+  order_only: "注文のみ",
+  accounting_only: "会計のみ",
+  pickup_only: "受け取りのみ",
+  order_accounting: "注文・会計",
+  accounting_pickup: "会計・受け取り",
+  order_accounting_pickup: "注文・会計・受け取り"
+};
+
+function applyWorkModeTitle(modeValue) {
+  const title = WORK_MODE_TITLES[modeValue] || "業務";
+  const heading = document.querySelector("#pageTitle");
+  if (heading) heading.textContent = title;
+  document.title = `${title} - 文化祭システム`;
+}
 const editingOrderIdRaw = Number(params.get("edit_order"));
 const editingOrderId = Number.isInteger(editingOrderIdRaw) && editingOrderIdRaw > 0 ? editingOrderIdRaw : null;
 const isEditing = editingOrderId !== null;
@@ -38,6 +54,7 @@ const productsById = new Map();
 let pendingAllInOneOrderId = null;
 
 if (!token || !classData) window.location.href = "index.html";
+applyWorkModeTitle(mode);
 className.textContent = classData.name;
 function showCompletion(text) {
   completionNotice.textContent = text;

@@ -16,6 +16,22 @@ if (requestedMode === "order_accounting_pickup") {
 const mode = ["accounting_only", "accounting_pickup", "order_accounting"].includes(requestedMode)
   ? requestedMode
   : "accounting_only";
+
+const WORK_MODE_TITLES = {
+  order_only: "注文のみ",
+  accounting_only: "会計のみ",
+  pickup_only: "受け取りのみ",
+  order_accounting: "注文・会計",
+  accounting_pickup: "会計・受け取り",
+  order_accounting_pickup: "注文・会計・受け取り"
+};
+
+function applyWorkModeTitle(modeValue) {
+  const title = WORK_MODE_TITLES[modeValue] || "業務";
+  const heading = document.querySelector("#pageTitle");
+  if (heading) heading.textContent = title;
+  document.title = `${title} - 文化祭システム`;
+}
 const className = document.querySelector("#className");
 const message = document.querySelector("#message");
 const completionNotice = document.querySelector("#completionNotice");
@@ -34,6 +50,7 @@ let currentOrder = null;
 let selectedOrderId = null;
 
 if (!token || !classData) window.location.href = "index.html";
+applyWorkModeTitle(mode);
 className.textContent = classData.name;
 
 function showCompletion(text) {
