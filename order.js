@@ -4,13 +4,18 @@ const currentWorker = JSON.parse(sessionStorage.getItem("currentWorker") || "nul
 const API_BASE = "https://163.44.103.65/api";
 const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode") || sessionStorage.getItem("currentWorkMode") || "order_only";
+const editingOrderIdRaw = Number(params.get("edit_order"));
+const editingOrderId = Number.isInteger(editingOrderIdRaw) && editingOrderIdRaw > 0 ? editingOrderIdRaw : null;
+const isEditing = editingOrderId !== null;
 const noTicket = mode === "order_accounting_pickup";
+const pageTitle = document.querySelector("#pageTitle");
 const className = document.querySelector("#className");
 const productsElement = document.querySelector("#products");
 const cartElement = document.querySelector("#cart");
 const totalElement = document.querySelector("#total");
 const message = document.querySelector("#message");
 const completionNotice = document.querySelector("#completionNotice");
+const editOrderHelp = document.querySelector("#editOrderHelp");
 const ticketSection = document.querySelector("#ticketSection");
 const ticketHelp = document.querySelector("#ticketHelp");
 const ticketAuto = document.querySelector("#ticketAuto");
@@ -24,6 +29,7 @@ const correctionList = document.querySelector("#correctionList");
 const correctionMessage = document.querySelector("#correctionMessage");
 let selectedTicket = null;
 let settings = null;
+const productsById = new Map();
 
 if (!token || !classData) window.location.href = "index.html";
 className.textContent = classData.name;
@@ -48,7 +54,7 @@ const cart = [];
 const quantityDisplays = new Set();
 
 async function loadTicketState() {
-  if (noTicket) {
+  if (isEditing || noTicket) {
     ticketSection.hidden = true;
     return;
   }
@@ -219,6 +225,8 @@ async function loadProducts() {
 
     productsElement.innerHTML = "";
     quantityDisplays.clear();
+    productsById.clear();
+    for (const product of data.products) productsById.set(product.id, product);
 
     for (const product of data.products) {
       const div = document.createElement("section");
@@ -390,8 +398,112 @@ function renderCart() {
 }
 
 
+async function loadEditingOrder() {
+  if (!isEditing) return;
+
+  pageTitle.textContent = "注文内容の訂正";
+  document.title = "注文内容の訂正 - 文化祭システム";
+  editOrderHelp.hidden = false;
+  correctionButton.hidden = true;
+  ticketSection.hidden = true;
+  orderButton.textContent = "注文内容を更新";
+
+  const response = await fetch(`${API_BASE}/orders/id/${editingOrderId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "注文を取得できませんでした");
+  if (data.order.handed_over) throw new Error("受け取り済みです。先に受け取り完了を取り消してください");
+
+  cart.length = 0;
+  for (const item of data.order.items) {
+    const product = productsById.get(item.product_id);
+    if (!product) {
+      throw new Error(`「${item.product_name}」は現在販売中の商品に存在しないため、この画面では訂正できません`);
+    }
+
+    const currentOptions = [];
+    for (const savedOption of item.options || []) {
+      let found = null;
+      for (const group of product.option_groups || []) {
+        const option = (group.options || []).find(o => o.id === savedOption.option_id);
+        if (option) {
+          found = { id: option.id, name: option.name, extra_price: option.extra_price, group_name: group.name };
+          break;
+        }
+      }
+      if (!found) throw new Error(`「${savedOption.option_name}」は現在のオプションに存在しないため、この画面では訂正できません`);
+      currentOptions.push(found);
+    }
+
+    const extraPrice = currentOptions.reduce((sum, option) => sum + option.extra_price, 0);
+    cart.push({
+      product_id: product.id,
+      name: product.name,
+      base_price: product.price,
+      price: product.price + extraPrice,
+      quantity: item.quantity,
+      option_key: optionKey(currentOptions),
+      options: currentOptions
+    });
+  }
+
+  renderCart();
+  updateAllQuantityDisplays();
+}
+
+async function submitOrderEdit(allowPaymentReversal = false) {
+  if (cart.length === 0) {
+    message.textContent = "商品を1つ以上選択してください";
+    return;
+  }
+
+  const items = cart.map(item => ({
+    product_id: item.product_id,
+    quantity: item.quantity,
+    option_ids: item.options.map(option => option.id)
+  }));
+
+  const response = await fetch(`${API_BASE}/orders/${editingOrderId}/edit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      items,
+      allow_payment_reversal: allowPaymentReversal,
+      actor_user_id: currentWorker?.id || null,
+      work_mode: mode
+    })
+  });
+  const data = await response.json();
+
+  if (response.status === 409 && data.requires_payment_reversal) {
+    const ok = window.confirm(
+      `合計金額が ${data.old_total}円 → ${data.new_total}円 に変わります。\n会計を取り消して注文内容を訂正しますか？\n\n訂正後は再会計が必要です。`
+    );
+    if (ok) return submitOrderEdit(true);
+    message.textContent = "訂正を中止しました。会計は変更されていません";
+    return;
+  }
+
+  if (!response.ok) throw new Error(data.message || "注文内容を訂正できませんでした");
+
+  sessionStorage.setItem("workCompletionMessage", data.message);
+  window.location.href = `pickup.html?mode=${encodeURIComponent(mode)}&from=work&order_id=${editingOrderId}`;
+}
+
 orderButton.addEventListener("click", async () => {
   clearCompletion();
+  if (isEditing) {
+    try {
+      orderButton.disabled = true;
+      await submitOrderEdit(false);
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      orderButton.disabled = false;
+    }
+    return;
+  }
   if (cart.length === 0) { message.textContent = "商品を1つ以上選択してください"; return; }
   if (!noTicket && settings && !settings.auto_cycle && !selectedTicket) { message.textContent = "注文番号を選択してください"; return; }
   const items = cart.map(item => ({ product_id: item.product_id, quantity: item.quantity, option_ids: item.options.map(option => option.id) }));
@@ -517,9 +629,25 @@ correctionCloseButton.addEventListener("click", () => { correctionPanel.hidden =
 correctionPanel.addEventListener("click", event => { if (event.target === correctionPanel) correctionPanel.hidden = true; });
 
 backButton.addEventListener("click", () => {
+  if (isEditing) {
+    window.location.href = `pickup.html?mode=${encodeURIComponent(mode)}&from=work&order_id=${editingOrderId}`;
+    return;
+  }
   window.location.href = params.get("from") === "work" ? "work-select.html" : "menu.html";
 });
 
-renderCart();
-loadTicketState();
-loadProducts();
+async function initializeOrderPage() {
+  renderCart();
+  await loadTicketState();
+  await loadProducts();
+  if (isEditing) {
+    try {
+      await loadEditingOrder();
+    } catch (error) {
+      message.textContent = error.message;
+      orderButton.disabled = true;
+    }
+  }
+}
+
+initializeOrderPage();

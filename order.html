@@ -5,16 +5,16 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>注文 - 文化祭システム</title>
-<link href="style.css?v=20260910-correction1" rel="stylesheet"/>
+<link href="style.css?v=20260911-orderedit1" rel="stylesheet"/>
 </head>
 <body class="page-order has-global-back">
 <nav aria-label="ページナビゲーション" class="global-back-bar">
 <button class="global-back-button" id="backButton" type="button">← 戻る</button>
 <button class="global-correction-button" id="correctionButton" type="button">訂正</button>
 </nav>
-<header><h1>注文</h1></header>
+<header><h1 id="pageTitle">注文</h1></header>
 <main>
-<h2 id="className"></h2><div aria-live="polite" class="completion-notice" hidden="" id="completionNotice" role="status"></div>
+<h2 id="className"></h2><div aria-live="polite" class="completion-notice" hidden="" id="completionNotice" role="status"></div><p class="edit-order-help" hidden id="editOrderHelp">現在の注文内容を読み込んでいます。トッピングを変える場合は、下の「注文内容」で元の組み合わせを減らしてから、新しい組み合わせを追加してください。</p>
 <section id="ticketSection">
 <h3>注文番号</h3>
 <p id="ticketHelp"></p>
@@ -33,6 +33,6 @@
 <div id="correctionList" class="correction-list"></div>
 </div>
 </section>
-<script src="order.js?v=20260910-correction1"></script>
+<script src="order.js?v=20260911-orderedit1"></script>
 </body>
 </html>

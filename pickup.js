@@ -11,6 +11,7 @@ const orderList = document.querySelector("#orderList");
 const detailSection = document.querySelector("#detailSection");
 const orderElement = document.querySelector("#order");
 const totalElement = document.querySelector("#total");
+const editOrderButton = document.querySelector("#editOrderButton");
 const pickupButton = document.querySelector("#pickupButton");
 const backButton = document.querySelector("#backButton");
 const correctionButton = document.querySelector("#correctionButton");
@@ -56,6 +57,7 @@ function renderDetail(order) {
     orderElement.appendChild(d);
   }
   totalElement.textContent = `合計 ${order.total}円`;
+  editOrderButton.disabled = order.handed_over === 1 || order.status === "cancelled";
   pickupButton.disabled = order.status !== "paid";
   pickupButton.textContent = order.status === "paid" ? "受け取り完了" : "会計が完了していません";
 }
@@ -101,6 +103,11 @@ async function loadOrders() {
     orderList.appendChild(b);
   }
 }
+
+editOrderButton.addEventListener("click", () => {
+  if (!currentOrder) return;
+  window.location.href = `order.html?edit_order=${currentOrder.id}&mode=${encodeURIComponent(mode)}&from=pickup`;
+});
 
 pickupButton.addEventListener("click", async () => {
   if (!currentOrder || currentOrder.status !== "paid") return;
@@ -161,10 +168,23 @@ async function loadCorrections() {
     const actor = order.latest_operation?.attendance_number ? `${order.latest_operation.attendance_number}番 ${order.latest_operation.user_name}` : "担当者記録なし";
     card.innerHTML = `<div class="correction-card-head"><strong>注文番号 ${order.ticket_number}</strong><span>${order.handed_over ? "受け取り済み" : "未受け取り"}</span></div><p>${order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ")}</p><small>${actor}</small>`;
     const actions = document.createElement("div"); actions.className = "correction-actions";
+    if (order.status !== "cancelled" && !order.handed_over) {
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "correction-action";
+      edit.textContent = "注文内容を訂正";
+      edit.addEventListener("click", () => {
+        window.location.href = `order.html?edit_order=${order.id}&mode=${encodeURIComponent(mode)}&from=pickup`;
+      });
+      actions.appendChild(edit);
+    }
     if (order.status === "paid" && order.handed_over) {
       const b=document.createElement("button"); b.type="button"; b.className="correction-action destructive"; b.textContent="受け取り完了を取り消す";
       b.addEventListener("click", async()=>{ try { await correctionRequest(order.id,"undo_handover"); } catch(e){ correctionMessage.textContent=e.message; } }); actions.appendChild(b);
-    } else { const n=document.createElement("p"); n.className="correction-none"; n.textContent="現在この画面から行える訂正はありません。"; actions.appendChild(n); }
+    }
+    if (!actions.children.length) {
+      const n=document.createElement("p"); n.className="correction-none"; n.textContent="現在この画面から行える訂正はありません。"; actions.appendChild(n);
+    }
     card.appendChild(actions); correctionList.appendChild(card);
   }
 }

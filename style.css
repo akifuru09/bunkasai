@@ -1710,3 +1710,30 @@ body.has-global-back #backButton.global-back-button:hover {
   border: 1px solid #c99;
 }
 .correction-none { color: #666; font-size: .9rem; }
+
+/* 注文内容訂正 */
+.edit-order-help {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #cfcfcf;
+  background: #fff;
+  line-height: 1.6;
+}
+
+.pickup-detail-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.pickup-detail-actions > button {
+  flex: 1 1 180px;
+  min-height: 46px;
+}
+
+.secondary-action {
+  background: #fff;
+  color: #111;
+  border: 1px solid #999;
+}
