@@ -2082,3 +2082,23 @@ body.page-accounting main > section:first-of-type {
     padding-right: 12px;
   }
 }
+
+
+/* 2026-09-11: 直前操作の復元ボタン */
+.global-correction-button {
+  width: auto;
+  max-width: min(58vw, 320px);
+  min-height: 40px;
+  padding: 7px 12px;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .global-correction-button {
+    max-width: 60vw;
+    font-size: 13px;
+    padding: 6px 9px;
+  }
+}

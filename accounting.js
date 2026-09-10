@@ -53,6 +53,14 @@ if (!token || !classData) window.location.href = "index.html";
 applyWorkModeTitle(mode);
 className.textContent = classData.name;
 
+function applyRestoreButtonLabel() {
+  correctionButton.textContent = mode === "accounting_pickup"
+    ? "直前の会計/受け取りを復元"
+    : "直前の会計を復元";
+}
+applyRestoreButtonLabel();
+
+
 function showCompletion(text) {
   completionNotice.textContent = text;
   completionNotice.hidden = false;
@@ -256,6 +264,40 @@ editOrderButton.addEventListener("click", () => {
 document.querySelector("#cashButton").addEventListener("click", () => pay("cash"));
 document.querySelector("#paypayButton").addEventListener("click", () => pay("paypay"));
 
+
+async function restoreLastAccounting() {
+  clearCompletion();
+  correctionButton.disabled = true;
+  message.textContent = "直前の操作を復元しています...";
+
+  try {
+    const restoreType = mode === "accounting_pickup" ? "payment_handover" : "payment";
+    const response = await fetch(`${API_BASE}/restore-last`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        restore_type: restoreType,
+        actor_user_id: currentWorker?.id || null,
+        work_mode: mode
+      })
+    });
+    const data = await getJson(response, "復元処理でサーバーエラーが発生しました");
+    if (!response.ok) throw new Error(data.message || "直前の操作を復元できませんでした");
+
+    orderList.hidden = false;
+    await loadOrders();
+    renderDetail(data.order);
+    showCompletion(data.message);
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    correctionButton.disabled = false;
+  }
+}
+
 async function correctionRequest(orderId, action, extra = {}) {
   correctionMessage.textContent = "処理しています...";
   const response = await fetch(`${API_BASE}/corrections/${orderId}`, {
@@ -313,10 +355,7 @@ async function loadCorrections() {
   }
 }
 
-correctionButton.addEventListener("click", async () => {
-  correctionPanel.hidden = false; correctionMessage.textContent = "";
-  try { await loadCorrections(); } catch (error) { correctionMessage.textContent = error.message; }
-});
+correctionButton.addEventListener("click", restoreLastAccounting);
 correctionCloseButton.addEventListener("click", () => { correctionPanel.hidden = true; });
 correctionPanel.addEventListener("click", event => { if (event.target === correctionPanel) correctionPanel.hidden = true; });
 

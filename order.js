@@ -56,6 +56,23 @@ let pendingAllInOneOrderId = null;
 if (!token || !classData) window.location.href = "index.html";
 applyWorkModeTitle(mode);
 className.textContent = classData.name;
+
+function applyRestoreButtonLabel() {
+  if (isEditing) {
+    correctionButton.hidden = true;
+    return;
+  }
+
+  if (mode === "order_accounting_pickup") {
+    correctionButton.textContent = "直前の注文・会計/受け取りを復元";
+  } else if (mode === "order_accounting") {
+    correctionButton.textContent = "直前の会計を復元";
+  } else {
+    correctionButton.textContent = "直前の注文を復元";
+  }
+}
+applyRestoreButtonLabel();
+
 function showCompletion(text) {
   completionNotice.textContent = text;
   completionNotice.hidden = false;
@@ -427,6 +444,105 @@ function renderCart() {
 }
 
 
+
+function putOrderContentsIntoCart(order) {
+  cart.length = 0;
+
+  for (const item of order.items || []) {
+    const product = productsById.get(item.product_id);
+    if (!product) {
+      throw new Error(`「${item.product_name}」は現在販売中の商品に存在しないため復元できません`);
+    }
+
+    const currentOptions = [];
+    for (const savedOption of item.options || []) {
+      let found = null;
+      for (const group of product.option_groups || []) {
+        const option = (group.options || []).find(o => o.id === savedOption.option_id);
+        if (option) {
+          found = {
+            id: option.id,
+            name: option.name,
+            extra_price: option.extra_price,
+            group_name: group.name
+          };
+          break;
+        }
+      }
+      if (!found) {
+        throw new Error(`「${savedOption.option_name}」は現在のオプションに存在しないため復元できません`);
+      }
+      currentOptions.push(found);
+    }
+
+    const extraPrice = currentOptions.reduce((sum, option) => sum + option.extra_price, 0);
+    cart.push({
+      product_id: product.id,
+      name: product.name,
+      base_price: product.price,
+      price: product.price + extraPrice,
+      quantity: item.quantity,
+      option_key: optionKey(currentOptions),
+      options: currentOptions
+    });
+  }
+
+  renderCart();
+  updateAllQuantityDisplays();
+}
+
+async function restoreLastFromOrderPage() {
+  clearCompletion();
+  correctionButton.disabled = true;
+  message.textContent = "直前の操作を復元しています...";
+
+  try {
+    const restoreType =
+      mode === "order_accounting_pickup" ? "all_in_one" :
+      mode === "order_accounting" ? "payment" :
+      "order";
+
+    const response = await fetch(`${API_BASE}/restore-last`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        restore_type: restoreType,
+        actor_user_id: currentWorker?.id || null,
+        work_mode: mode
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "直前の操作を復元できませんでした");
+
+    if (mode === "order_accounting") {
+      sessionStorage.setItem("workCompletionMessage", data.message);
+      window.location.href = `accounting.html?from=work&mode=order_accounting&order_id=${data.order.id}`;
+      return;
+    }
+
+    pendingAllInOneOrderId = null;
+    inlinePaymentSection.hidden = true;
+    productsSection.hidden = false;
+    orderButton.hidden = false;
+
+    putOrderContentsIntoCart(data.order);
+
+    if (mode === "order_only" && data.order.ticket_number > 0) {
+      selectedTicket = data.order.ticket_number;
+    }
+
+    message.textContent = "";
+    showCompletion(data.message);
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    correctionButton.disabled = false;
+  }
+}
+
 async function loadEditingOrder() {
   if (!isEditing) return;
 
@@ -734,11 +850,7 @@ async function loadCorrections() {
   }
 }
 
-correctionButton.addEventListener("click", async () => {
-  correctionPanel.hidden = false;
-  correctionMessage.textContent = "";
-  try { await loadCorrections(); } catch (error) { correctionMessage.textContent = error.message; }
-});
+correctionButton.addEventListener("click", restoreLastFromOrderPage);
 correctionCloseButton.addEventListener("click", () => { correctionPanel.hidden = true; });
 correctionPanel.addEventListener("click", event => { if (event.target === correctionPanel) correctionPanel.hidden = true; });
 
