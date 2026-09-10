@@ -9,6 +9,7 @@ const productsElement = document.querySelector("#products");
 const cartElement = document.querySelector("#cart");
 const totalElement = document.querySelector("#total");
 const message = document.querySelector("#message");
+const completionNotice = document.querySelector("#completionNotice");
 const ticketSection = document.querySelector("#ticketSection");
 const ticketHelp = document.querySelector("#ticketHelp");
 const ticketAuto = document.querySelector("#ticketAuto");
@@ -20,6 +21,23 @@ let settings = null;
 
 if (!token || !classData) window.location.href = "index.html";
 className.textContent = classData.name;
+function showCompletion(text) {
+  completionNotice.textContent = text;
+  completionNotice.hidden = false;
+  message.textContent = "";
+}
+
+function clearCompletion() {
+  completionNotice.hidden = true;
+  completionNotice.textContent = "";
+}
+
+const flashCompletion = sessionStorage.getItem("workCompletionMessage");
+if (flashCompletion) {
+  showCompletion(flashCompletion);
+  sessionStorage.removeItem("workCompletionMessage");
+}
+
 const cart = [];
 const quantityDisplays = new Set();
 
@@ -271,6 +289,7 @@ async function loadProducts() {
       }
 
       plusButton.addEventListener("click", () => {
+        clearCompletion();
         const result = currentOptions(true);
         if (!result.ok) {
           message.textContent = result.message;
@@ -281,6 +300,7 @@ async function loadProducts() {
       });
 
       minusButton.addEventListener("click", () => {
+        clearCompletion();
         const result = currentOptions(true);
         if (!result.ok) {
           message.textContent = result.message;
@@ -365,6 +385,7 @@ function renderCart() {
 
 
 orderButton.addEventListener("click", async () => {
+  clearCompletion();
   if (cart.length === 0) { message.textContent = "商品を1つ以上選択してください"; return; }
   if (!noTicket && settings && !settings.auto_cycle && !selectedTicket) { message.textContent = "注文番号を選択してください"; return; }
   const items = cart.map(item => ({ product_id: item.product_id, quantity: item.quantity, option_ids: item.options.map(option => option.id) }));
@@ -383,9 +404,12 @@ orderButton.addEventListener("click", async () => {
       return;
     }
 
-    message.textContent = `注文を受け付けました（注文番号 ${data.ticket_number}）`;
-    cart.length = 0; selectedTicket = null; renderCart(); updateAllQuantityDisplays();
+    showCompletion(`注文完了（注文番号 ${data.ticket_number}）`);
+    cart.length = 0;
+    selectedTicket = null;
+    renderCart();
     await loadTicketState();
+    await loadProducts();
   } catch (error) {
     message.textContent = error.message;
   } finally {

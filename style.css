@@ -1265,3 +1265,21 @@ body.page-master #newClassName {
 .inline-number-input { display:flex; align-items:center; gap:8px; max-width:320px; }
 .switch-row { display:flex; align-items:flex-start; gap:10px; }
 @media (max-width:640px){ .workflow-order-card{grid-template-columns:1fr; gap:4px;} .ticket-grid{grid-template-columns:repeat(5,1fr);} }
+
+
+/* 連続業務の完了表示 */
+.completion-notice {
+  margin: 14px 0 18px;
+  padding: 16px 18px;
+  border: 2px solid #111;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.completion-notice::before {
+  content: "✓ ";
+  font-size: 1.2em;
+}
