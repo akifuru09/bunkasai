@@ -251,7 +251,7 @@ async function pay(method) {
     }
 
     if (mode === "order_accounting") {
-      sessionStorage.setItem("workCompletionMessage", "注文・会計完了");
+      sessionStorage.setItem("workCompletionMessage", `注文・会計完了（注文番号 ${currentOrder.ticket_number}）`);
       const restorePart = lastRestoreToken
         ? `&restore_token=${encodeURIComponent(lastRestoreToken)}&restore_context=${encodeURIComponent(pageRestoreContext)}`
         : "";
