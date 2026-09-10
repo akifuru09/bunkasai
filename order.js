@@ -52,6 +52,20 @@ let selectedTicket = null;
 let settings = null;
 const productsById = new Map();
 let pendingAllInOneOrderId = null;
+const pageRestoreContext = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g, "_");
+let lastRestoreToken = null;
+let lastRestoreContext = pageRestoreContext;
+
+const transferredRestoreToken = params.get("restore_token");
+const transferredRestoreContext = params.get("restore_context");
+if (transferredRestoreToken && transferredRestoreContext && mode === "order_accounting") {
+  lastRestoreToken = transferredRestoreToken;
+  lastRestoreContext = transferredRestoreContext;
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("restore_token");
+  cleanUrl.searchParams.delete("restore_context");
+  history.replaceState(null, "", cleanUrl.pathname + cleanUrl.search);
+}
 
 if (!token || !classData) window.location.href = "index.html";
 applyWorkModeTitle(mode);
@@ -72,6 +86,11 @@ function applyRestoreButtonLabel() {
   }
 }
 applyRestoreButtonLabel();
+
+function updateRestoreButtonState() {
+  if (!isEditing) correctionButton.disabled = !lastRestoreToken;
+}
+updateRestoreButtonState();
 
 function showCompletion(text) {
   completionNotice.textContent = text;
@@ -497,10 +516,7 @@ async function restoreLastFromOrderPage() {
   message.textContent = "直前の操作を復元しています...";
 
   try {
-    const restoreType =
-      mode === "order_accounting_pickup" ? "all_in_one" :
-      mode === "order_accounting" ? "payment" :
-      "order";
+    if (!lastRestoreToken) throw new Error("この画面で復元できる直前の操作はありません");
 
     const response = await fetch(`${API_BASE}/restore-last`, {
       method: "POST",
@@ -509,13 +525,17 @@ async function restoreLastFromOrderPage() {
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        restore_type: restoreType,
+        restore_token: lastRestoreToken,
+        restore_context_id: lastRestoreContext,
         actor_user_id: currentWorker?.id || null,
         work_mode: mode
       })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "直前の操作を復元できませんでした");
+
+    lastRestoreToken = null;
+    updateRestoreButtonState();
 
     if (mode === "order_accounting") {
       sessionStorage.setItem("workCompletionMessage", data.message);
@@ -532,6 +552,7 @@ async function restoreLastFromOrderPage() {
 
     if (mode === "order_only" && data.order.ticket_number > 0) {
       selectedTicket = data.order.ticket_number;
+      await loadTicketState();
     }
 
     message.textContent = "";
@@ -539,7 +560,7 @@ async function restoreLastFromOrderPage() {
   } catch (error) {
     message.textContent = error.message;
   } finally {
-    correctionButton.disabled = false;
+    updateRestoreButtonState();
   }
 }
 
@@ -661,10 +682,16 @@ orderButton.addEventListener("click", async () => {
     const response = await fetch(`${API_BASE}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ticket_number: selectedTicket, no_ticket: noTicket, items, actor_user_id: currentWorker?.id || null, work_mode: mode })
+      body: JSON.stringify({ ticket_number: selectedTicket, no_ticket: noTicket, items, actor_user_id: currentWorker?.id || null, work_mode: mode, restore_context_id: pageRestoreContext })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "注文を送信できませんでした");
+
+    if (mode === "order_only") {
+      lastRestoreToken = data.restore_token || null;
+      lastRestoreContext = pageRestoreContext;
+      updateRestoreButtonState();
+    }
 
     if (mode === "order_accounting") {
       window.location.href = `accounting.html?from=work&mode=${mode}&order_id=${data.order_id}`;
@@ -716,11 +743,15 @@ async function completeAllInOnePayment(method) {
         method,
         complete_handover: true,
         actor_user_id: currentWorker?.id || null,
-        work_mode: mode
+        work_mode: mode,
+        restore_context_id: pageRestoreContext
       })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "会計処理に失敗しました");
+    lastRestoreToken = data.restore_token || null;
+    lastRestoreContext = pageRestoreContext;
+    updateRestoreButtonState();
 
     const verifyResponse = await fetch(`${API_BASE}/orders/id/${pendingAllInOneOrderId}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -864,6 +895,10 @@ backButton.addEventListener("click", () => {
     return;
   }
   window.location.href = params.get("from") === "work" ? "work-select.html" : "menu.html";
+});
+
+window.addEventListener("pagehide", () => {
+  lastRestoreToken = null;
 });
 
 async function initializeOrderPage() {

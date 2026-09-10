@@ -48,6 +48,8 @@ const correctionList = document.querySelector("#correctionList");
 const correctionMessage = document.querySelector("#correctionMessage");
 let currentOrder = null;
 let selectedOrderId = null;
+const pageRestoreContext = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).slice(2)}`).replace(/[^A-Za-z0-9_-]/g, "_");
+let lastRestoreToken = null;
 
 if (!token || !classData) window.location.href = "index.html";
 applyWorkModeTitle(mode);
@@ -59,6 +61,10 @@ function applyRestoreButtonLabel() {
     : "直前の会計を復元";
 }
 applyRestoreButtonLabel();
+function updateRestoreButtonState() {
+  correctionButton.disabled = !lastRestoreToken;
+}
+updateRestoreButtonState();
 
 
 function showCompletion(text) {
@@ -210,12 +216,15 @@ async function pay(method) {
         method,
         complete_handover: completesPickup,
         actor_user_id: currentWorker?.id || null,
-        work_mode: mode
+        work_mode: mode,
+        restore_context_id: pageRestoreContext
       })
     });
 
     const data = await getJson(response, "支払い処理でサーバーエラーが発生しました");
     if (!response.ok) throw new Error(data.message || "支払い処理に失敗しました");
+    lastRestoreToken = data.restore_token || null;
+    updateRestoreButtonState();
 
     if (completesPickup) {
       const verifyResponse = await fetch(`${API_BASE}/orders/id/${paidOrderId}`, {
@@ -243,7 +252,10 @@ async function pay(method) {
 
     if (mode === "order_accounting") {
       sessionStorage.setItem("workCompletionMessage", "注文・会計完了");
-      window.location.href = "order.html?from=work&mode=order_accounting";
+      const restorePart = lastRestoreToken
+        ? `&restore_token=${encodeURIComponent(lastRestoreToken)}&restore_context=${encodeURIComponent(pageRestoreContext)}`
+        : "";
+      window.location.href = `order.html?from=work&mode=order_accounting${restorePart}`;
       return;
     }
 
@@ -271,7 +283,7 @@ async function restoreLastAccounting() {
   message.textContent = "直前の操作を復元しています...";
 
   try {
-    const restoreType = mode === "accounting_pickup" ? "payment_handover" : "payment";
+    if (!lastRestoreToken) throw new Error("この画面で復元できる直前の会計はありません");
     const response = await fetch(`${API_BASE}/restore-last`, {
       method: "POST",
       headers: {
@@ -279,7 +291,8 @@ async function restoreLastAccounting() {
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        restore_type: restoreType,
+        restore_token: lastRestoreToken,
+        restore_context_id: pageRestoreContext,
         actor_user_id: currentWorker?.id || null,
         work_mode: mode
       })
@@ -287,6 +300,8 @@ async function restoreLastAccounting() {
     const data = await getJson(response, "復元処理でサーバーエラーが発生しました");
     if (!response.ok) throw new Error(data.message || "直前の操作を復元できませんでした");
 
+    lastRestoreToken = null;
+    updateRestoreButtonState();
     orderList.hidden = false;
     await loadOrders();
     renderDetail(data.order);
@@ -294,7 +309,7 @@ async function restoreLastAccounting() {
   } catch (error) {
     message.textContent = error.message;
   } finally {
-    correctionButton.disabled = false;
+    updateRestoreButtonState();
   }
 }
 
@@ -358,6 +373,10 @@ async function loadCorrections() {
 correctionButton.addEventListener("click", restoreLastAccounting);
 correctionCloseButton.addEventListener("click", () => { correctionPanel.hidden = true; });
 correctionPanel.addEventListener("click", event => { if (event.target === correctionPanel) correctionPanel.hidden = true; });
+
+window.addEventListener("pagehide", () => {
+  lastRestoreToken = null;
+});
 
 backButton.addEventListener("click", () => {
   window.location.href = params.get("from") === "work" ? "work-select.html" : "menu.html";
