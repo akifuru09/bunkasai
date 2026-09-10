@@ -1483,3 +1483,58 @@ header.has-top-back .top-back-button:hover {
     font-size: .92rem;
   }
 }
+
+
+/* Global fixed back bar v2 */
+body.has-global-back {
+  padding-top: 64px;
+}
+
+.global-back-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5000;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 max(12px, calc((100% - var(--content)) / 2));
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--line, #d9d9d9);
+}
+
+.global-back-button {
+  width: auto;
+  min-width: 88px;
+  min-height: 40px;
+  margin: 0;
+  padding: 7px 12px;
+  background: #fff;
+  color: #111;
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.global-back-button:hover {
+  background: #f2f2f2;
+}
+
+@media (max-width: 560px) {
+  body.has-global-back {
+    padding-top: 60px;
+  }
+
+  .global-back-bar {
+    height: 52px;
+    padding: 0 10px;
+  }
+
+  .global-back-button {
+    min-width: 82px;
+    min-height: 40px;
+  }
+}

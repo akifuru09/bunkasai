@@ -1,26 +1,27 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>注文 - 文化祭システム</title>
-  <link rel="stylesheet" href="style.css?v=20260910-flow1">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>注文 - 文化祭システム</title>
+<link href="style.css?v=20260910-topback1" rel="stylesheet"/>
 </head>
 <body class="page-order">
-<header><h1>注文</h1></header>
+<header class="has-top-back"><button class="top-back-button" id="backButton">← 戻る</button><h1>注文</h1></header>
 <main>
-  <h2 id="className"></h2>
-  <section id="ticketSection">
-    <h3>注文番号</h3>
-    <p id="ticketHelp"></p>
-    <div id="ticketAuto" class="ticket-auto" hidden></div>
-    <div id="ticketGrid" class="ticket-grid" hidden></div>
-  </section>
-  <section><h3>商品</h3><div id="products"></div></section>
-  <section><h3>注文内容</h3><div id="cart"></div><p id="total">合計 0円</p></section>
-  <button id="orderButton">注文を確定</button>
-  <button id="backButton">戻る</button>
-  <p id="message"></p>
+<h2 id="className"></h2>
+<section id="ticketSection">
+<h3>注文番号</h3>
+<p id="ticketHelp"></p>
+<div class="ticket-auto" hidden="" id="ticketAuto"></div>
+<div class="ticket-grid" hidden="" id="ticketGrid"></div>
+</section>
+<section><h3>商品</h3><div id="products"></div></section>
+<section><h3>注文内容</h3><div id="cart"></div><p id="total">合計 0円</p></section>
+<button id="orderButton">注文を確定</button>
+
+<p id="message"></p>
 </main>
 <script src="order.js?v=20260910-flow1"></script>
 </body>
