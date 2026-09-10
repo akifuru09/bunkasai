@@ -11,6 +11,11 @@ const noTicket = mode === "order_accounting_pickup";
 const pageTitle = document.querySelector("#pageTitle");
 const className = document.querySelector("#className");
 const productsElement = document.querySelector("#products");
+const productsSection = document.querySelector("#productsSection");
+const cartSection = document.querySelector("#cartSection");
+const inlinePaymentSection = document.querySelector("#inlinePaymentSection");
+const inlineCashButton = document.querySelector("#inlineCashButton");
+const inlinePayPayButton = document.querySelector("#inlinePayPayButton");
 const cartElement = document.querySelector("#cart");
 const totalElement = document.querySelector("#total");
 const message = document.querySelector("#message");
@@ -30,6 +35,7 @@ const correctionMessage = document.querySelector("#correctionMessage");
 let selectedTicket = null;
 let settings = null;
 const productsById = new Map();
+let pendingAllInOneOrderId = null;
 
 if (!token || !classData) window.location.href = "index.html";
 className.textContent = classData.name;
@@ -517,8 +523,18 @@ orderButton.addEventListener("click", async () => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "注文を送信できませんでした");
 
-    if (mode === "order_accounting" || mode === "order_accounting_pickup") {
+    if (mode === "order_accounting") {
       window.location.href = `accounting.html?from=work&mode=${mode}&order_id=${data.order_id}`;
+      return;
+    }
+
+    if (mode === "order_accounting_pickup") {
+      pendingAllInOneOrderId = data.order_id;
+      productsSection.hidden = true;
+      orderButton.hidden = true;
+      inlinePaymentSection.hidden = false;
+      message.textContent = "";
+      inlinePaymentSection.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -534,6 +550,76 @@ orderButton.addEventListener("click", async () => {
     orderButton.disabled = false;
   }
 });
+
+async function completeAllInOnePayment(method) {
+  if (!pendingAllInOneOrderId) {
+    message.textContent = "会計する注文がありません";
+    return;
+  }
+
+  inlineCashButton.disabled = true;
+  inlinePayPayButton.disabled = true;
+  message.textContent = "";
+
+  try {
+    const response = await fetch(`${API_BASE}/orders/${pendingAllInOneOrderId}/pay`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        method,
+        complete_handover: true,
+        actor_user_id: currentWorker?.id || null,
+        work_mode: mode
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "会計処理に失敗しました");
+
+    const verifyResponse = await fetch(`${API_BASE}/orders/id/${pendingAllInOneOrderId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const verifyData = await verifyResponse.json();
+    if (!verifyResponse.ok) throw new Error(verifyData.message || "注文状態を確認できませんでした");
+
+    if (!verifyData.order.handed_over) {
+      const handoverResponse = await fetch(`${API_BASE}/orders/${pendingAllInOneOrderId}/handed-over`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          actor_user_id: currentWorker?.id || null,
+          work_mode: mode
+        })
+      });
+      const handoverData = await handoverResponse.json();
+      if (!handoverResponse.ok) throw new Error(handoverData.message || "受け取り完了にできませんでした");
+    }
+
+    pendingAllInOneOrderId = null;
+    inlinePaymentSection.hidden = true;
+    productsSection.hidden = false;
+    orderButton.hidden = false;
+    cart.length = 0;
+    selectedTicket = null;
+    renderCart();
+    await loadProducts();
+    showCompletion("注文・会計/受け取り完了");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    inlineCashButton.disabled = false;
+    inlinePayPayButton.disabled = false;
+  }
+}
+
+inlineCashButton.addEventListener("click", () => completeAllInOnePayment("cash"));
+inlinePayPayButton.addEventListener("click", () => completeAllInOnePayment("paypay"));
 
 
 function correctionStatus(order) {

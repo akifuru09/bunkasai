@@ -1737,3 +1737,33 @@ body.has-global-back #backButton.global-back-button:hover {
   color: #111;
   border: 1px solid #999;
 }
+
+
+/* 注文・会計・受け取り：注文画面内会計 */
+.inline-payment-section {
+  margin-top: 18px;
+  padding: 18px;
+  border: 2px solid #111;
+  border-radius: 10px;
+  background: #fff;
+}
+.inline-payment-section h3 {
+  margin-top: 0;
+}
+.inline-payment-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.inline-payment-actions button {
+  min-height: 56px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+@media (max-width: 520px) {
+  .inline-payment-actions {
+    grid-template-columns: 1fr;
+  }
+}

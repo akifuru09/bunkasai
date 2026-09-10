@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>注文 - 文化祭システム</title>
-<link href="style.css?v=20260911-orderedit1" rel="stylesheet"/>
+<link href="style.css?v=20260911-allinone2" rel="stylesheet"/>
 </head>
 <body class="page-order has-global-back">
 <nav aria-label="ページナビゲーション" class="global-back-bar">
@@ -21,8 +21,16 @@
 <div class="ticket-auto" hidden="" id="ticketAuto"></div>
 <div class="ticket-grid" hidden="" id="ticketGrid"></div>
 </section>
-<section><h3>商品</h3><div id="products"></div></section>
-<section><h3>注文内容</h3><div id="cart"></div><p id="total">合計 0円</p></section>
+<section id="productsSection"><h3>商品</h3><div id="products"></div></section>
+<section id="cartSection"><h3>注文内容</h3><div id="cart"></div><p id="total">合計 0円</p></section>
+<section class="inline-payment-section" hidden id="inlinePaymentSection">
+<h3>支払い方法</h3>
+<p>注文内容を確認して、支払い方法を選択してください。</p>
+<div class="inline-payment-actions">
+<button id="inlineCashButton" type="button">現金</button>
+<button id="inlinePayPayButton" type="button">PayPay</button>
+</div>
+</section>
 <button id="orderButton">注文を確定</button>
 <p id="message"></p>
 </main><section class="correction-overlay" hidden id="correctionPanel" aria-label="最近の操作の訂正">
@@ -33,6 +41,6 @@
 <div id="correctionList" class="correction-list"></div>
 </div>
 </section>
-<script src="order.js?v=20260911-orderedit1"></script>
+<script src="order.js?v=20260911-allinone2"></script>
 </body>
 </html>
