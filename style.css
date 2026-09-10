@@ -1603,3 +1603,23 @@ body.has-global-back #backButton.global-back-button:hover {
     padding: 7px 10px;
   }
 }
+
+
+/* Completion notice — operational screens */
+.completion-notice {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.completion-notice::before {
+  content: "✓ ";
+}
+
+.completion-notice[hidden] {
+  display: none;
+}

@@ -5,15 +5,15 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>注文 - 文化祭システム</title>
-<link href="style.css?v=20260910-globalback4" rel="stylesheet"/>
+<link href="style.css?v=20260910-operationfix1" rel="stylesheet"/>
 </head>
 <body class="page-order has-global-back">
-<nav class="global-back-bar" aria-label="ページナビゲーション">
-  <button class="global-back-button" id="backButton" type="button">← 戻る</button>
+<nav aria-label="ページナビゲーション" class="global-back-bar">
+<button class="global-back-button" id="backButton" type="button">← 戻る</button>
 </nav>
 <header><h1>注文</h1></header>
 <main>
-<h2 id="className"></h2>
+<h2 id="className"></h2><div aria-live="polite" class="completion-notice" hidden="" id="completionNotice" role="status"></div>
 <section id="ticketSection">
 <h3>注文番号</h3>
 <p id="ticketHelp"></p>
@@ -23,9 +23,8 @@
 <section><h3>商品</h3><div id="products"></div></section>
 <section><h3>注文内容</h3><div id="cart"></div><p id="total">合計 0円</p></section>
 <button id="orderButton">注文を確定</button>
-
 <p id="message"></p>
 </main>
-<script src="order.js?v=20260910-flow1"></script>
+<script src="order.js?v=20260910-operationfix1"></script>
 </body>
 </html>
