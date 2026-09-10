@@ -2102,3 +2102,23 @@ body.page-accounting main > section:first-of-type {
     padding: 6px 9px;
   }
 }
+
+/* 注文カードの注文時刻・会計時刻 */
+.workflow-order-card {
+  grid-template-areas:
+    "head total"
+    "times times"
+    "items items";
+}
+.workflow-card-times {
+  grid-area: times;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+  font-size: .86rem;
+  color: #666;
+}
+.workflow-card-times span {
+  white-space: nowrap;
+}

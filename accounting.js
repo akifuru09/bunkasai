@@ -133,6 +133,22 @@ async function getJson(response, fallbackMessage) {
   return response.json();
 }
 
+function parseUtcDate(value) {
+  if (!value) return null;
+  const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatTime(value, emptyLabel = "－") {
+  const date = parseUtcDate(value);
+  if (!date) return emptyLabel;
+  return date.toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
 async function loadOrders() {
   const directId = Number(params.get("order_id"));
   if (Number.isInteger(directId) && directId > 0) {
@@ -149,7 +165,7 @@ async function loadOrders() {
     return;
   }
 
-  const endpoint = mode === "accounting_pickup" ? "unreceived" : "unpaid";
+  const endpoint = "unpaid";
   const response = await fetch(`${API_BASE}/orders/${endpoint}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -166,17 +182,9 @@ async function loadOrders() {
     return Number.isFinite(time) ? time : Number.MAX_SAFE_INTEGER;
   };
 
-  const targets = [...data.orders].sort((a, b) => {
-    if (mode === "accounting_pickup") {
-      const aPaid = a.status === "paid";
-      const bPaid = b.status === "paid";
-      if (aPaid !== bPaid) return aPaid ? -1 : 1;
-      if (aPaid && bPaid) {
-        return parseTime(a.paid_at) - parseTime(b.paid_at) || Number(a.id) - Number(b.id);
-      }
-    }
-    return parseTime(a.created_at) - parseTime(b.created_at) || Number(a.id) - Number(b.id);
-  });
+  const targets = [...data.orders].sort((a, b) =>
+    parseTime(a.created_at) - parseTime(b.created_at) || Number(a.id) - Number(b.id)
+  );
 
   if (targets.length === 0) {
     orderList.innerHTML = `<p>${mode === "accounting_pickup" ? "会計・受け取り待ち" : "未会計"}の注文はありません。</p>`;
@@ -187,22 +195,22 @@ async function loadOrders() {
     const button = document.createElement("button");
     button.className = "workflow-order-card";
     button.dataset.orderId = String(order.id);
-    const state = order.status === "paid" ? "会計済み・受け取りへ" : "未会計";
+    const state = "未会計";
     const itemsText = order.items.map(i => `${i.product_name} × ${i.quantity}`).join(" / ");
     button.innerHTML = `
       <span class="workflow-card-head">
         <strong>注文番号 ${order.ticket_number}</strong>
         <span class="workflow-card-state">${state}</span>
       </span>
+      <span class="workflow-card-times">
+        <span>注文時刻 ${formatTime(order.created_at)}</span>
+        <span>会計時刻 ${formatTime(order.paid_at, "未会計")}</span>
+      </span>
       <span class="workflow-card-items">${itemsText}</span>
       <b class="workflow-card-total">${order.total}円</b>
     `;
     button.addEventListener("click", () => {
       clearCompletion();
-      if (mode === "accounting_pickup" && order.status === "paid") {
-        window.location.href = `pickup.html?from=work&mode=accounting_pickup&order_id=${order.id}`;
-        return;
-      }
       renderDetail(order);
     });
     orderList.appendChild(button);

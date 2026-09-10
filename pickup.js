@@ -102,6 +102,22 @@ function renderDetail(order) {
   pickupButton.textContent = order.status === "paid" ? "受け取り完了" : "会計が完了していません";
 }
 
+function parseUtcDate(value) {
+  if (!value) return null;
+  const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatTime(value, emptyLabel = "－") {
+  const date = parseUtcDate(value);
+  if (!date) return emptyLabel;
+  return date.toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
 async function loadOrders() {
   const directId = Number(params.get("order_id"));
   if (Number.isInteger(directId) && directId > 0) {
@@ -161,6 +177,10 @@ async function loadOrders() {
       <span class="workflow-card-head">
         <strong>注文番号 ${order.ticket_number}</strong>
         <span class="workflow-card-state">${state}</span>
+      </span>
+      <span class="workflow-card-times">
+        <span>注文時刻 ${formatTime(order.created_at)}</span>
+        <span>会計時刻 ${formatTime(order.paid_at, "未会計")}</span>
       </span>
       <span class="workflow-card-items">${itemsText}</span>
     `;
