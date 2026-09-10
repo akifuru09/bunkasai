@@ -108,10 +108,21 @@ function setOrderActionPanelVisible(visible) {
   document.body.classList.toggle("has-order-action-panel", visible);
 }
 
+const completedTicketParam = Number(params.get("completed_ticket"));
 const flashCompletion = sessionStorage.getItem("workCompletionMessage");
-if (flashCompletion) {
-  showCompletion(flashCompletion);
-  sessionStorage.removeItem("workCompletionMessage");
+sessionStorage.removeItem("workCompletionMessage");
+
+function showArrivalCompletion() {
+  // 注文・会計ではURLで渡された注文番号を最優先する。
+  // sessionStorageだけに依存しないので、遷移後も注文番号を確実に表示できる。
+  if (mode === "order_accounting" && Number.isFinite(completedTicketParam) && completedTicketParam > 0) {
+    showCompletion(`注文・会計完了（注文番号 ${completedTicketParam}）`);
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("completed_ticket");
+    history.replaceState(null, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+    return;
+  }
+  if (flashCompletion) showCompletion(flashCompletion);
 }
 
 const cart = [];
@@ -915,4 +926,8 @@ async function initializeOrderPage() {
   }
 }
 
-initializeOrderPage();
+initializeOrderPage().then(() => {
+  showArrivalCompletion();
+}).catch(error => {
+  message.textContent = error.message;
+});

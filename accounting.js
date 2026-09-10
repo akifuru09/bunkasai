@@ -251,11 +251,16 @@ async function pay(method) {
     }
 
     if (mode === "order_accounting") {
-      sessionStorage.setItem("workCompletionMessage", `注文・会計完了（注文番号 ${currentOrder.ticket_number}）`);
+      // 非同期処理後でも確実に同じ注文番号を使えるよう、会計直前の注文番号を明示的に渡す。
+      const completedTicketNumber = Number(currentOrder.ticket_number);
+      sessionStorage.setItem("workCompletionMessage", `注文・会計完了（注文番号 ${completedTicketNumber}）`);
       const restorePart = lastRestoreToken
         ? `&restore_token=${encodeURIComponent(lastRestoreToken)}&restore_context=${encodeURIComponent(pageRestoreContext)}`
         : "";
-      window.location.href = `order.html?from=work&mode=order_accounting${restorePart}`;
+      const ticketPart = Number.isFinite(completedTicketNumber) && completedTicketNumber > 0
+        ? `&completed_ticket=${encodeURIComponent(completedTicketNumber)}`
+        : "";
+      window.location.href = `order.html?from=work&mode=order_accounting${ticketPart}${restorePart}`;
       return;
     }
 
